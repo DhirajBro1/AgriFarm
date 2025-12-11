@@ -1,2 +1,2 @@
-# AgriFarm
-an app for development for farmers
+# 🌱AgriFarm
+an app build in react-expo for development of farmers
