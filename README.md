@@ -1,2 +1,2 @@
-# Agri_Farm
+# AgriFarm
 an app for development for farmers
