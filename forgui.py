@@ -15,7 +15,7 @@ def enter_yourinfo():
         result_text.insert(END, f"{crop}\n")
         for d in dates:
             result_text.insert(END, f"  {d}\n")
-        result_text.insert(END, "------\n")
+        result_text.insert(END, "\n")
 
 root = Tk()
 root.title("Agrifarm GUI")
@@ -32,8 +32,9 @@ entry.grid(column=0, row=2, pady=5)
 ttk.Button(frm, text="Submit", command=enter_yourinfo).grid(column=0, row=3, pady=5)
 ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
 
-# Text widget to display results
+
 result_text = Text(frm, width=50, height=20)
 result_text.grid(column=0, row=4, columnspan=2, pady=10)
 
 root.mainloop()
+
