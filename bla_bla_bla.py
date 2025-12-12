@@ -27,7 +27,7 @@ def _normalize_nepali_month(name):
     if not name:
         raise ValueError("Empty month name")
     clean = name.strip()
-    # try exact case-insensitive match
+    
     for key in nepali_to_english_dates_conversion.keys():
         if clean.lower() == key.lower():
             return key
@@ -45,13 +45,13 @@ def _normalize_nepali_month(name):
     if low in aliases:
         return aliases[low]
 
-    # try approximate match
+   
     keys = list(nepali_to_english_dates_conversion.keys())
     matches = difflib.get_close_matches(clean, keys, n=1, cutoff=0.5)
     if matches:
         return matches[0]
 
-    # try startswith match for short variants
+   
     for key in keys:
         if key.lower().startswith(low[:3]):
             return key
@@ -138,4 +138,5 @@ def get_crops_for_place(place_name):
             return None, f"Error parsing sowing range '{sowing_range}': {e}"
         result[f"{row['Crop']} - {row['Variety']}"] = dates
     
+
     return result, None
