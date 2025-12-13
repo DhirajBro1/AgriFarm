@@ -1,87 +1,136 @@
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import BottomNav from '../components/BottomNav';
-import type { ThemeColors } from '../theme/ThemeProvider';
-import { useTheme } from '../theme/ThemeProvider';
+/**
+ * AccountScreen Component - User profile management and app settings
+ *
+ * Features:
+ * - Display and edit user profile information (name and farming region)
+ * - Theme switching between light and dark modes
+ * - Farming region selection with detailed descriptions
+ * - Data persistence using AsyncStorage
+ * - Settings management for app preferences
+ * - Clear app data functionality for troubleshooting
+ */
+
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import BottomNav from "../components/BottomNav";
+import type { ThemeColors } from "../theme/ThemeProvider";
+import { useTheme } from "../theme/ThemeProvider";
 
 export default function AccountScreen() {
+  // Theme and styling hooks
   const { colors, theme, toggleTheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [username, setUsername] = useState('');
-  const [province, setProvince] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editUsername, setEditUsername] = useState('');
-  const [editProvince, setEditProvince] = useState('');
-  
-  const provinces = [
-    'Koshi',
-    'Madhesh',
-    'Bagmati',
-    'Gandaki',
-    'Lumbini',
-    'Karnali',
-    'Sudurpashchim'
+
+  // User profile state
+  const [username, setUsername] = useState(""); // User's display name
+  const [region, setRegion] = useState(""); // User's farming region
+
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false); // Toggle between view and edit modes
+  const [editUsername, setEditUsername] = useState(""); // Temporary username during editing
+  const [editRegion, setEditRegion] = useState(""); // Temporary region during editing
+
+  // Available farming regions with descriptions
+  // Each region has different climate conditions and suitable crops
+  const regions = [
+    {
+      key: "high",
+      label: "High Hills (Above 2000m)",
+      desc: "Cool climate, high altitude crops",
+    },
+    {
+      key: "mid",
+      label: "Mid Hills (600-2000m)",
+      desc: "Moderate climate, diverse crops",
+    },
+    {
+      key: "terai",
+      label: "Terai Plains (Below 600m)",
+      desc: "Warm climate, rice, wheat crops",
+    },
   ];
 
+  // Load user data when component mounts
   useEffect(() => {
     loadUserData();
   }, []);
 
+  /**
+   * Load user profile data from AsyncStorage
+   * Retrieves stored username and region preferences
+   */
   const loadUserData = async () => {
     try {
-      const storedUsername = await AsyncStorage.getItem('username');
-      const storedProvince = await AsyncStorage.getItem('province');
-      
-      if (storedUsername && storedProvince) {
+      const storedUsername = await AsyncStorage.getItem("username");
+      const storedRegion = await AsyncStorage.getItem("region");
+
+      if (storedUsername && storedRegion) {
         setUsername(storedUsername);
-        setProvince(storedProvince);
+        setRegion(storedRegion);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error("Error loading data:", error);
     }
   };
 
   const startEditing = () => {
     setEditUsername(username);
-    setEditProvince(province);
+    setEditRegion(region);
     setIsEditing(true);
   };
 
   const handleSave = async () => {
-    if (editUsername.trim() && editProvince) {
+    if (editUsername.trim() && editRegion) {
       try {
-        await AsyncStorage.setItem('username', editUsername);
-        await AsyncStorage.setItem('province', editProvince);
+        await AsyncStorage.setItem("username", editUsername);
+        await AsyncStorage.setItem("region", editRegion);
         setUsername(editUsername);
-        setProvince(editProvince);
+        setRegion(editRegion);
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully!');
+        Alert.alert("Success", "Profile updated successfully!");
       } catch (error) {
-        console.error('Error saving data:', error);
-        Alert.alert('Error', 'Failed to update profile');
+        console.error("Error saving data:", error);
+        Alert.alert("Error", "Failed to update profile");
       }
     }
   };
 
   const handleCancel = () => {
     setEditUsername(username);
-    setEditProvince(province);
+    setEditRegion(region);
     setIsEditing(false);
   };
 
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Ionicons name="leaf" size={32} color="#fff" />
-          <Text style={styles.headerTitle}>AgriFarm</Text>
+        <View style={styles.headerTop}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="leaf" size={20} color="#fff" />
+            <Text style={styles.headerTitle}>AgriFarm</Text>
+          </View>
+        </View>
+        <View style={styles.headerBottom}>
+          <Text style={styles.welcomeText}>Account Settings</Text>
         </View>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.card}>
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
@@ -95,7 +144,11 @@ export default function AccountScreen() {
               <View style={styles.infoSection}>
                 <Text style={styles.infoLabel}>Username</Text>
                 <View style={styles.infoValueContainer}>
-                  <Ionicons name="person-circle" size={20} color={colors.primary} />
+                  <Ionicons
+                    name="person-circle"
+                    size={20}
+                    color={colors.primary}
+                  />
                   <Text style={styles.infoValue}>{username}</Text>
                 </View>
               </View>
@@ -103,10 +156,16 @@ export default function AccountScreen() {
               <View style={styles.divider} />
 
               <View style={styles.infoSection}>
-                <Text style={styles.infoLabel}>Province</Text>
+                <Text style={styles.infoLabel}>Farming Region</Text>
                 <View style={styles.infoValueContainer}>
                   <Ionicons name="location" size={20} color={colors.primary} />
-                  <Text style={styles.infoValue}>{province}</Text>
+                  <Text style={styles.infoValue}>
+                    {region === "high"
+                      ? "High Hills"
+                      : region === "mid"
+                        ? "Mid Hills"
+                        : "Terai Plains"}
+                  </Text>
                 </View>
               </View>
 
@@ -132,22 +191,35 @@ export default function AccountScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Province</Text>
-                <View style={styles.provinceGrid}>
-                  {provinces.map((prov) => (
+                <Text style={styles.inputLabel}>Farming Region</Text>
+                <View style={styles.regionGrid}>
+                  {regions.map((regionOption) => (
                     <TouchableOpacity
-                      key={prov}
+                      key={regionOption.key}
                       style={[
-                        styles.provinceButton,
-                        editProvince === prov && styles.provinceButtonSelected
+                        styles.regionButton,
+                        editRegion === regionOption.key &&
+                          styles.regionButtonSelected,
                       ]}
-                      onPress={() => setEditProvince(prov)}
+                      onPress={() => setEditRegion(regionOption.key)}
                     >
-                      <Text style={[
-                        styles.provinceButtonText,
-                        editProvince === prov && styles.provinceButtonTextSelected
-                      ]}>
-                        {prov}
+                      <Text
+                        style={[
+                          styles.regionButtonText,
+                          editRegion === regionOption.key &&
+                            styles.regionButtonTextSelected,
+                        ]}
+                      >
+                        {regionOption.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.regionButtonDesc,
+                          editRegion === regionOption.key &&
+                            styles.regionButtonDescSelected,
+                        ]}
+                      >
+                        {regionOption.desc}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -183,29 +255,39 @@ export default function AccountScreen() {
           <View style={styles.themeRow}>
             <View style={styles.themeLabels}>
               <Text style={styles.infoLabel}>Dark mode</Text>
-              <Text style={styles.mutedText}>Toggle between light and dark themes.</Text>
+              <Text style={styles.mutedText}>
+                Toggle between light and dark themes.
+              </Text>
             </View>
             <Switch
-              value={theme === 'dark'}
+              value={theme === "dark"}
               onValueChange={toggleTheme}
               trackColor={{ false: colors.border, true: colors.primaryMuted }}
-              thumbColor={theme === 'dark' ? colors.primary : '#f4f3f4'}
+              thumbColor={theme === "dark" ? colors.primary : "#f4f3f4"}
             />
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={styles.appInfoHeader}>
-            <Ionicons name="information-circle" size={24} color={colors.primary} />
+            <Ionicons
+              name="information-circle"
+              size={24}
+              color={colors.primary}
+            />
             <Text style={styles.appInfoTitle}>About AgriFarm</Text>
           </View>
           <Text style={styles.appInfoText}>
-            AgriFarm helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized crop recommendations for optimal farming.
+            AgriFarm helps Nepali farmers plan their crops based on their
+            province and the current Nepali month. Get personalized crop
+            recommendations for optimal farming.
           </Text>
           <View style={styles.versionContainer}>
             <Text style={styles.versionText}>Version 1.0.0</Text>
           </View>
         </View>
+
+        <View style={styles.bottomSpacing} />
       </ScrollView>
 
       <BottomNav active="account" />
@@ -221,33 +303,53 @@ const createStyles = (colors: ThemeColors) =>
     },
     header: {
       backgroundColor: colors.primary,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      paddingTop: 44,
       paddingHorizontal: 16,
-      paddingTop: 48,
-      paddingBottom: 16,
+      paddingBottom: 12,
+    },
+    headerTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8,
     },
     headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
     },
     headerTitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#fff',
-      marginLeft: 8,
+      fontSize: 18,
+      fontWeight: "bold",
+      color: "#fff",
+      marginLeft: 6,
+    },
+    headerBottom: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    welcomeText: {
+      fontSize: 14,
+      color: "rgba(255,255,255,0.9)",
+      fontWeight: "500",
     },
     content: {
       flex: 1,
       padding: 16,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: 20,
+    },
+    bottomSpacing: {
+      height: 100,
     },
     card: {
       backgroundColor: colors.card,
       borderRadius: 12,
       padding: 24,
       marginBottom: 16,
-      shadowColor: '#000',
+      shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 4,
@@ -256,7 +358,7 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.border,
     },
     profileHeader: {
-      alignItems: 'center',
+      alignItems: "center",
       marginBottom: 32,
     },
     avatarContainer: {
@@ -264,13 +366,13 @@ const createStyles = (colors: ThemeColors) =>
       height: 100,
       backgroundColor: colors.primaryMuted,
       borderRadius: 50,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       marginBottom: 16,
     },
     cardTitle: {
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: colors.text,
     },
     infoContainer: {
@@ -281,18 +383,18 @@ const createStyles = (colors: ThemeColors) =>
     },
     infoLabel: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: colors.muted,
     },
     infoValueContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 12,
     },
     infoValue: {
       fontSize: 18,
       color: colors.text,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     divider: {
       height: 1,
@@ -300,18 +402,18 @@ const createStyles = (colors: ThemeColors) =>
     },
     editButton: {
       backgroundColor: colors.primary,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 8,
       padding: 16,
       borderRadius: 8,
       marginTop: 16,
     },
     editButtonText: {
-      color: '#fff',
+      color: "#fff",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     editContainer: {
       gap: 20,
@@ -321,7 +423,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     inputLabel: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.text,
     },
     input: {
@@ -333,43 +435,48 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 16,
       color: colors.text,
     },
-    provinceGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
+    regionGrid: {
+      gap: 12,
     },
-    provinceButton: {
-      backgroundColor: colors.cardMuted,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      minWidth: '30%',
-      alignItems: 'center',
-      borderWidth: 1,
+    regionButton: {
+      backgroundColor: colors.surface || colors.cardMuted,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      borderWidth: 2,
       borderColor: colors.border,
     },
-    provinceButtonSelected: {
-      backgroundColor: colors.primary,
+    regionButtonSelected: {
+      backgroundColor: colors.primary + "10",
       borderColor: colors.primary,
     },
-    provinceButtonText: {
+    regionButtonText: {
       color: colors.text,
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: 15,
+      fontWeight: "600",
+      marginBottom: 4,
     },
-    provinceButtonTextSelected: {
-      color: '#fff',
+    regionButtonTextSelected: {
+      color: colors.primary,
+    },
+    regionButtonDesc: {
+      color: colors.muted,
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    regionButtonDescSelected: {
+      color: colors.primary + "CC",
     },
     buttonGroup: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 12,
       marginTop: 8,
     },
     button: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 8,
       padding: 16,
       borderRadius: 8,
@@ -381,24 +488,24 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.cardMuted,
     },
     buttonText: {
-      color: '#fff',
+      color: "#fff",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     cancelButtonText: {
       color: colors.text,
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     appInfoHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
       marginBottom: 16,
     },
     appInfoTitle: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.text,
     },
     appInfoText: {
@@ -415,12 +522,12 @@ const createStyles = (colors: ThemeColors) =>
     versionText: {
       fontSize: 12,
       color: colors.muted,
-      textAlign: 'center',
+      textAlign: "center",
     },
     themeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
     },
     themeLabels: {
       flex: 1,
