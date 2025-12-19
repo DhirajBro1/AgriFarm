@@ -458,15 +458,15 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => router.push("/crops")}
+                onPress={() => router.push("/disease-detection" as any)}
               >
                 <View
-                  style={[styles.actionIcon, { backgroundColor: "#9B59B615" }]}
+                  style={[styles.actionIcon, { backgroundColor: "#E74C3C15" }]}
                 >
-                  <Ionicons name="nutrition" size={28} color="#9B59B6" />
+                  <Ionicons name="camera" size={28} color="#E74C3C" />
                 </View>
-                <Text style={styles.actionLabel}>Care Guide</Text>
-                <Text style={styles.actionDesc}>Fertilizer & pest control</Text>
+                <Text style={styles.actionLabel}>Disease Detection</Text>
+                <Text style={styles.actionDesc}>AI-powered plant analysis</Text>
               </TouchableOpacity>
             </View>
           </View>

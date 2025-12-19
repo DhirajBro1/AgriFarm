@@ -13,6 +13,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -31,7 +32,7 @@ import CSVParser, { PHData } from "../utils/csvParser";
 import { convertUnit, LOCAL_UNITS } from "../utils/farmingData";
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
-type ToolType = "yield" | "ph" | "units" | "expenses" | "notes";
+type ToolType = "yield" | "ph" | "units" | "expenses" | "notes" | "disease";
 
 // Interface for expense tracking
 interface Expense {
@@ -709,6 +710,67 @@ export default function ToolsScreen() {
     </ScrollView>
   );
 
+  const renderDiseaseDetection = () => (
+    <ScrollView
+      style={styles.tabContent}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="camera" size={20} color={colors.primary} />
+          <Text style={styles.cardTitle}>Disease Detection</Text>
+        </View>
+
+        <Text style={styles.cardSubtitle}>
+          AI-powered plant health analysis using your camera
+        </Text>
+
+        <View style={styles.emptyState}>
+          <Ionicons name="camera-outline" size={48} color={colors.primary} />
+          <Text style={styles.emptyText}>
+            Take a photo of your plant to detect diseases and health issues
+          </Text>
+          <TouchableOpacity
+            style={styles.emptyActionButton}
+            onPress={() => router.push("/disease-detection" as any)}
+          >
+            <Text style={styles.emptyActionText}>Start Analysis</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View
+          style={[styles.card, { marginTop: 16, backgroundColor: "#f8f9fa" }]}
+        >
+          <Text style={[styles.cardTitle, { fontSize: 16, marginBottom: 8 }]}>
+            How it works:
+          </Text>
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons name="camera" size={16} color={colors.primary} />
+              <Text style={{ marginLeft: 8, fontSize: 14, color: colors.text }}>
+                Take a clear photo of the affected plant
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons name="cloud-upload" size={16} color={colors.primary} />
+              <Text style={{ marginLeft: 8, fontSize: 14, color: colors.text }}>
+                AI analyzes the image for diseases
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons name="list" size={16} color={colors.primary} />
+              <Text style={{ marginLeft: 8, fontSize: 14, color: colors.text }}>
+                Get detailed results and recommendations
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.bottomSpacing} />
+    </ScrollView>
+  );
+
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
       seed: "#27AE60",
@@ -745,6 +807,7 @@ export default function ToolsScreen() {
     { key: "ph" as ToolType, label: "pH Guide", icon: "flask" },
     { key: "expenses" as ToolType, label: "Expenses", icon: "wallet" },
     { key: "notes" as ToolType, label: "Notes", icon: "document-text" },
+    { key: "disease" as ToolType, label: "Disease Detection", icon: "camera" },
   ];
 
   return (
@@ -797,6 +860,7 @@ export default function ToolsScreen() {
         {activeTool === "ph" && renderPHGuide()}
         {activeTool === "expenses" && renderExpenseTracker()}
         {activeTool === "notes" && renderNotes()}
+        {activeTool === "disease" && renderDiseaseDetection()}
       </View>
 
       <Modal visible={showExpenseModal} animationType="slide" transparent>

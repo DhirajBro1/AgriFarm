@@ -37,6 +37,7 @@
 - **Unit Converter**: Convert between metric and traditional Nepali units (Ropani, Mana, Pathi, etc.)
 - **Expense Tracker**: Track farming costs by category (seeds, fertilizer, labor, etc.)
 - **Digital Notes**: Personal farming observations and reminders
+- **Disease Detection**: AI-powered plant health analysis using camera and **PlantNet API**
 
 #### 💡 **Tips & Guidance**
 - **Farming Tips**: Categorized advice on watering, fertilizing, planting, and harvesting
@@ -54,37 +55,42 @@
 ### **Frontend Framework**
 - **React Native** with **Expo** for cross-platform mobile development
 - **TypeScript** for type safety and better developer experience
-- **Expo Router** for file-based navigation
+- **Expo Router** for navigation (using Stack and `useRouter` hook)
 
 ### **Data Management**
 - **CSV-based Database**: Efficient storage of crop information
-- **AsyncStorage**: Local data persistence
-- **Singleton Pattern**: Centralized data management with CSVParser
+- **AsyncStorage**: Local data persistence for user preferences
+- **Singleton Pattern**: Centralized data management with `CSVParser` class
 
 ### **Design & UI**
-- **Theme System**: Dynamic light/dark mode with comprehensive color palette
+- **Theme System**: Dynamic light/dark mode with comprehensive color palette (`ThemeProvider`)
 - **Responsive Design**: Optimized for different screen sizes
-- **Safe Area Handling**: Support for modern devices with notches
-- **Intuitive Navigation**: Bottom tab navigation with visual feedback
+- **Custom Navigation**: Custom `BottomNav` component for seamless switching between main modules
 
 ### **Key Components**
 ```
-├── app/                    # Main application screens
-│   ├── index.tsx          # Home/Dashboard screen
+├── app/                    # Main application screens and routing
+│   ├── index.tsx          # Home/Dashboard screen and entry point
 │   ├── crops.tsx          # Crop browsing and search
 │   ├── tools.tsx          # Farming calculators and tools
 │   ├── tips.tsx           # Farming tips and pest info
-│   └── account.tsx        # User profile management
+│   ├── disease-detection.tsx # UI for PlantNet disease analysis
+│   ├── account.tsx        # User profile management
+│   └── _layout.tsx        # Root layout configuration
 ├── components/            # Reusable UI components
-│   └── BottomNav.tsx      # Navigation bar component
+│   └── BottomNav.tsx      # Custom navigation bar component
+├── services/              # External API services
+│   ├── plantNetDiseaseService.ts  # PlantNet API integration for disease detection
+│   └── cameraService.ts   # Camera and image handling utilities
 ├── utils/                 # Utility functions and helpers
-│   ├── csvParser.ts       # Data parsing and management
-│   └── farmingData.ts     # Static farming data and conversions
+│   ├── csvParser.ts       # CSV data parsing and management
+│   ├── farmingData.ts     # Static farming data and unit conversions
+│   └── imageUtils.ts      # Image processing helpers
 ├── theme/                 # Theme management
-│   └── ThemeProvider.tsx  # App-wide theme context
-└── data/                  # CSV data files
+│   └── ThemeProvider.tsx  # App-wide theme context provider
+└── data/                  # CSV data files (Source of Truth)
     ├── clean.csv          # Main crop database
-    ├── requirements_for_crops.csv
+    ├── requirements_for_crops.csv # NPK and other requirements
     ├── grown.csv          # Regional growing information
     └── ph.csv             # Soil pH data
 ```
@@ -110,15 +116,34 @@
    npm install
    ```
 
-3. **Start the development server**
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local and add your PlantNet API key
+   ```
+   
+   **Required Variable:**
+   ```
+   EXPO_PUBLIC_PLANTNET_API_KEY=your_api_key_here
+   ```
+
+4. **Start the development server**
    ```bash
    npx expo start
    ```
 
-4. **Run on device**
+5. **Run on device**
    - Scan the QR code with Expo Go app (Android)
    - Scan with Camera app (iOS) - it will open in Expo Go
    - Or use simulators: `npx expo start --android` / `npx expo start --ios`
+
+### Environment Configuration
+
+For the Disease Detection feature, you'll need a PlantNet API key:
+
+1. **Get API Key**: Visit [my.plantnet.org](https://my.plantnet.org/) and create an account.
+2. **Add to Environment**: Set `EXPO_PUBLIC_PLANTNET_API_KEY` in your `.env.local` file.
+3. **Camera Permissions**: The app will request camera and photo library permissions automatically when accessing the disease detection feature.
 
 ### Building for Production
 
@@ -138,10 +163,9 @@ The app uses carefully curated agricultural data:
 
 - **Crop Database**: 100+ vegetables, fruits, and grains suitable for Nepal
 - **Regional Information**: Altitude-based growing zones
-- **Fertilizer Data**: NPK requirements for optimal growth
+- **PlantNet API**: State-of-the-art machine learning model for identifying plant diseases from images.
 - **Seasonal Calendar**: Nepali month-based planting schedules
-- **pH Requirements**: Soil acidity preferences for different crops
-- **Local Units**: Traditional Nepali farming measurements
+- **Local Units**: Traditional Nepali farming measurements (Ropani, Bigha, etc.)
 
 ## 🌍 Localization
 
@@ -178,14 +202,14 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - **Nepali Farmers**: For their traditional knowledge and feedback
 - **Agricultural Experts**: For crop data validation
-- **Open Source Community**: For the amazing tools and libraries
+- **PlantNet**: For providing the powerful disease identification API
 - **Expo Team**: For the excellent development platform
 
 ## 📞 Support & Contact
 
 - **Issues**: [GitHub Issues](https://github.com/DhirajBro1/AgriFarm/issues)
-- **Email**: support@agrifarm.com
 - **Community**: Join our farming community discussions
+- **Developer**: DhirajBro1
 
 ## 🔮 Roadmap
 
@@ -193,13 +217,11 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - [ ] **Weather Integration**: Local weather forecasts and alerts
 - [ ] **Market Prices**: Real-time crop price information
 - [ ] **Community Forum**: Farmer-to-farmer knowledge sharing
-- [ ] **Offline Mode**: Full app functionality without internet
+- [ ] **Offline Mode**: Full app functionality without internet (enhanced caching)
 - [ ] **Voice Interface**: Nepali voice commands and responses
-- [ ] **Image Recognition**: Pest and disease identification via camera
+- [x] **Disease Detection**: AI-powered plant health analysis ✅ **Completed**
+- [ ] **Treatment Recommendations**: Detailed cure suggestions for detected diseases
 - [ ] **Government Schemes**: Information about agricultural subsidies
-
-### Version History
-- **v1.0.0**: Initial release with core features
 
 ---
 
