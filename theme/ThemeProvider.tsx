@@ -1,15 +1,9 @@
 /**
- * ThemeProvider - Manages app-wide theming with light/dark mode support
- *
- * Features:
- * - Dynamic light/dark theme switching
- * - Persistent theme preference storage
- * - System theme detection and following
- * - Comprehensive color palette for farming app UI
- * - Context-based theme access throughout the app
- * - Smooth theme transitions
+ * ThemeProvider - Modern Minimal Design System
+ * Focus: Cleanliness, Whitespace, Readability
  */
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   useCallback,
@@ -18,95 +12,123 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { Appearance } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Appearance, TextStyle } from "react-native";
 
-// Theme mode options
 export type ThemeMode = "light" | "dark";
 
-/**
- * Complete color palette interface for the AgriFarm app
- * Includes all colors needed for a comprehensive farming app UI
- */
+export const Typography = {
+  sizes: {
+    mobile: 14,
+    base: 16,     // Standard readable size
+    large: 20,    // Subheaders
+    header: 28,   // Section headers
+    display: 32,  // Hero/Page Titles
+  },
+  weights: {
+    regular: "400" as TextStyle["fontWeight"],
+    medium: "500" as TextStyle["fontWeight"],
+    bold: "600" as TextStyle["fontWeight"], // Slightly lighter bold for elegance
+    heavy: "800" as TextStyle["fontWeight"],
+  },
+  lineHeights: {
+    base: 24,
+    header: 34,
+  }
+};
+
+export const Spacing = {
+  xs: 4,
+  s: 8,
+  m: 16,
+  l: 24,
+  xl: 32,
+  xxl: 48,
+  screenPadding: 24, // Generous padding
+};
+
 export type ThemeColors = {
-  background: string; // Main app background color
-  card: string; // Card and container background color
-  cardMuted: string; // Muted card background for less prominent content
-  surface: string; // Surface color for elevated components
-  primary: string; // Primary brand color (agricultural green)
-  primaryMuted: string; // Muted primary color for backgrounds
-  text: string; // Primary text color
-  muted: string; // Secondary/muted text color
-  border: string; // Border color for separators and outlines
-  accent: string; // Accent color for highlights
-  navBackground: string; // Navigation bar background
-  navActive: string; // Active navigation item color
+  background: string;
+  card: string;
+  cardMuted: string;
+  surface: string;
+  primary: string;
+  primaryDark: string;
+  primaryLight: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+  error: string;
+  success: string;
+  warning: string;
+  navBackground: string;
+  navActive: string;
+  navInactive: string;
+  shadow: string; // New shadow color
 };
 
-/**
- * Theme context value interface
- * Provides theme state and control functions
- */
 type ThemeContextValue = {
-  theme: ThemeMode; // Current theme mode
-  colors: ThemeColors; // Current color palette
-  toggleTheme: () => void; // Function to toggle between light/dark
-  setTheme: (mode: ThemeMode) => void; // Function to set specific theme
+  theme: ThemeMode;
+  colors: ThemeColors;
+  typography: typeof Typography;
+  spacing: typeof Spacing;
+  toggleTheme: () => void;
+  setTheme: (mode: ThemeMode) => void;
 };
 
-// React context for theme management
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-
-// AsyncStorage key for persisting theme preference
 const STORAGE_KEY = "theme-preference";
 
-/**
- * Color palettes for light and dark themes
- * Carefully designed for agricultural app with nature-inspired colors
- */
 const palette: Record<ThemeMode, ThemeColors> = {
   light: {
-    background: "#f9fafb", // Light gray background
-    card: "#ffffff", // Pure white for cards
-    cardMuted: "#f3f4f6", // Light gray for muted cards
-    surface: "#f8fafc", // Slightly off-white surface
-    primary: "#16a34a", // Agricultural green
-    primaryMuted: "#dcfce7", // Light green background
-    text: "#111827", // Dark gray for text
-    muted: "#6b7280", // Medium gray for secondary text
-    border: "#e5e7eb", // Light gray borders
-    accent: "#f0fdf4", // Very light green accent
-    navBackground: "#ffffff",
-    navActive: "#16a34a",
+    background: "#FAFAFA",      // Off-white, soft on eyes
+    card: "#FFFFFF",            // Pure white
+    cardMuted: "#F5F5F5",
+    surface: "#FFFFFF",
+    primary: "#10B981",         // Vibrant but clean Emerald
+    primaryDark: "#047857",
+    primaryLight: "#ECFDF5",    // Very light mint
+    text: "#171717",            // Soft Black
+    textSecondary: "#737373",   // Neutral Gray
+    border: "#E5E5E5",          // Subtle border
+    error: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    navBackground: "#FFFFFF",
+    navActive: "#10B981",
+    navInactive: "#A3A3A3",
+    shadow: "#000000",
   },
   dark: {
-    background: "#0f172a",
-    card: "#111827",
-    cardMuted: "#1f2937",
-    surface: "#1e293b",
-    primary: "#22c55e",
-    primaryMuted: "#064e3b",
-    text: "#e5e7eb",
-    muted: "#94a3b8",
-    border: "#1f2937",
-    accent: "#0d1b2a",
-    navBackground: "#0b1220",
-    navActive: "#22c55e",
-  },
+    background: "#000000",      // Pure Black (OLED friendly) or deep gray
+    card: "#171717",            // Dark Gray
+    cardMuted: "#262626",
+    surface: "#171717",
+    primary: "#34D399",
+    primaryDark: "#10B981",
+    primaryLight: "#064E3B",
+    text: "#FAFAFA",
+    textSecondary: "#A3A3A3",
+    border: "#262626",
+    error: "#EF4444",
+    success: "#10B981",
+    warning: "#FBBF24",
+    navBackground: "#000000",
+    navActive: "#34D399",
+    navInactive: "#525252",
+    shadow: "#000000",
+  }
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = Appearance.getColorScheme();
   const [theme, setTheme] = useState<ThemeMode>(
-    systemScheme === "dark" ? "dark" : "light",
+    systemScheme === "dark" ? "dark" : "light"
   );
 
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const storedTheme = (await AsyncStorage.getItem(
-          STORAGE_KEY,
-        )) as ThemeMode | null;
+        const storedTheme = await AsyncStorage.getItem(STORAGE_KEY) as ThemeMode | null;
         if (storedTheme === "light" || storedTheme === "dark") {
           setTheme(storedTheme);
         }
@@ -138,18 +160,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     persistTheme(mode);
   }, []);
 
-  const value = useMemo(
-    () => ({
-      theme,
-      colors: palette[theme],
-      toggleTheme,
-      setTheme: handleSetTheme,
-    }),
-    [theme, toggleTheme, handleSetTheme],
-  );
+  const value = useMemo(() => ({
+    theme,
+    colors: palette[theme],
+    typography: Typography,
+    spacing: Spacing,
+    toggleTheme,
+    setTheme: handleSetTheme,
+  }), [theme, toggleTheme, handleSetTheme]);
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
   );
 }
 
