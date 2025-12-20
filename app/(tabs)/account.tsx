@@ -211,7 +211,7 @@ export default function AccountScreen() {
             province and the current Nepali month. Get personalized recomendations.
           </Text>
           <View style={styles.versionBox}>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>Version 1.0.0.1</Text>
           </View>
         </View>
 
