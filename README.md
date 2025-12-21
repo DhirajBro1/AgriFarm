@@ -209,19 +209,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - **Issues**: [GitHub Issues](https://github.com/DhirajBro1/AgriFarm/issues)
 - **Community**: Join our farming community discussions
-- **Developer**: DhirajBro1
+- **Developer**: DhirajBro1 Kabutor69 Alone Mysticstriver
 
-## 🔮 Roadmap
-
-### Upcoming Features
-- [ ] **Weather Integration**: Local weather forecasts and alerts
-- [ ] **Market Prices**: Real-time crop price information
-- [ ] **Community Forum**: Farmer-to-farmer knowledge sharing
-- [ ] **Offline Mode**: Full app functionality without internet (enhanced caching)
-- [ ] **Voice Interface**: Nepali voice commands and responses
-- [x] **Disease Detection**: AI-powered plant health analysis ✅ **Completed**
-- [ ] **Treatment Recommendations**: Detailed cure suggestions for detected diseases
-- [ ] **Government Schemes**: Information about agricultural subsidies
 
 ---
 
