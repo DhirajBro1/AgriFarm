@@ -1,0 +1,357 @@
+/**
+ * DiseaseDetectionScreen - Merged Legacy Features + Modern UI
+ * Focus: Deep Data (Images, Confidence) + Inline Info
+ */
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import CameraService, { CameraResult } from "../services/cameraService";
+import PlantNetDiseaseService from "../services/plantNetDiseaseService";
+import { ThemeColors, useTheme } from "../theme/ThemeProvider";
+
+// ... Interfaces maintained ...
+interface AnalysisResult {
+  isHealthy: boolean;
+  healthProbability: number;
+  isPlant: boolean;
+  plantProbability: number;
+  topDiseases: {
+    name: string;
+    probability: number;
+    similarImages: {
+      id: string;
+      url: string;
+      url_small: string;
+      similarity: number;
+    }[];
+  }[];
+}
+
+export default function DiseaseDetectionScreen() {
+  const { colors, typography, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
+
+  const [capturedImage, setCapturedImage] = useState<CameraResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+
+  // ... (Camera Logic Same as before) ...
+  const handleTakePicture = async () => {
+    try {
+      const result = await CameraService.takePicture({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
+      if (!result.cancelled) { setCapturedImage(result); setAnalysisResult(null); }
+    } catch (error) { Alert.alert("Error", "Failed to take picture."); }
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const result = await CameraService.pickImage({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
+      if (!result.cancelled) { setCapturedImage(result); setAnalysisResult(null); }
+    } catch (error) { Alert.alert("Error", "Failed to pick image."); }
+  };
+
+  const analyzeDisease = async () => {
+    if (!capturedImage?.base64) return;
+    setIsAnalyzing(true);
+    try {
+      const response = await PlantNetDiseaseService.identifyDiseaseFromBase64([capturedImage.base64], true);
+      const formattedResult = PlantNetDiseaseService.formatHealthSummary(response);
+      setAnalysisResult(formattedResult);
+    } catch (error) {
+      Alert.alert("Analysis Error", "Failed to analyze.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Scan Plant</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+
+        {/* Viewfinder */}
+        <View style={styles.viewfinderContainer}>
+          {capturedImage ? (
+            <View style={styles.previewWrapper}>
+              <Image source={{ uri: capturedImage.uri }} style={styles.previewImage} />
+              <TouchableOpacity
+                style={styles.closeImageBtn}
+                onPress={() => { setCapturedImage(null); setAnalysisResult(null); }}
+              >
+                <Ionicons name="close-circle" size={32} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.placeholder} onPress={handleTakePicture}>
+              <View style={styles.dashedBox}>
+                <Ionicons name="scan-outline" size={48} color={colors.textSecondary} />
+                <Text style={styles.placeholderText}>Tap to Scan Leaf</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Info Card (Legacy Style) */}
+        {!capturedImage && (
+          <View style={styles.infoCard}>
+            <View style={styles.infoHeader}>
+              <Ionicons name="information-circle" size={20} color="#2196F3" />
+              <Text style={styles.infoTitle}>How it works</Text>
+            </View>
+            <Text style={styles.infoText}>
+              • Take a clear photo of the affected plant part{"\n"}
+              • PlantNet AI analyzes the image for diseases{"\n"}
+              • Get detailed results with similar cases
+            </Text>
+          </View>
+        )}
+
+        {/* Controls */}
+        {!capturedImage && (
+          <View style={styles.controls}>
+            <TouchableOpacity style={styles.captureButton} onPress={handleTakePicture}>
+              <Ionicons name="camera" size={32} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.galleryLink} onPress={handlePickImage}>
+              <Text style={styles.galleryText}>or upload from gallery</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Analysis Loading/Button */}
+        {capturedImage && !analysisResult && (
+          <View style={styles.actionContainer}>
+            {isAnalyzing ? (
+              <View style={styles.centerParams}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.loadingText}>Analyzing leaf patterns...</Text>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.analyzeBtn} onPress={analyzeDisease}>
+                <Text style={styles.analyzeBtnText}>Check Health</Text>
+                <Ionicons name="sparkles" size={20} color="#FFF" />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* RESULTS */}
+        {analysisResult && (
+          <View style={styles.resultsContainer}>
+
+            {/* Plant Confidence */}
+            <View style={styles.plantConfidence}>
+              <Ionicons name="leaf" size={16} color={colors.textSecondary} />
+              <Text style={styles.plantParamText}>
+                Plant Confidence: {(analysisResult.plantProbability * 100).toFixed(0)}%
+              </Text>
+            </View>
+
+            {/* Health Status */}
+            <View style={[
+              styles.statusCard,
+              {
+                backgroundColor: analysisResult.isHealthy ? '#ECFDF5' : '#FEF2F2',
+                borderColor: analysisResult.isHealthy ? '#10B981' : '#EF4444'
+              }
+            ]}>
+              <Ionicons
+                name={analysisResult.isHealthy ? "happy" : "alert-circle"}
+                size={40}
+                color={analysisResult.isHealthy ? '#065F46' : '#991B1B'}
+              />
+              <Text style={[styles.statusTitle, { color: analysisResult.isHealthy ? '#065F46' : '#991B1B' }]}>
+                {analysisResult.isHealthy ? "Healthy Plant" : "Disease Detected"}
+              </Text>
+              <Text style={[styles.confidenceText, { color: analysisResult.isHealthy ? '#065F46' : '#991B1B' }]}>
+                {(analysisResult.healthProbability * 100).toFixed(0)}% Certainty
+              </Text>
+            </View>
+
+            {/* Recommendation (Cure/Prev) */}
+            {!analysisResult.isHealthy && (
+              <View style={styles.tipBox}>
+                <Text style={styles.tipTitle}>Action Required</Text>
+                <Text style={styles.tipText}>
+                  Isolate plant. Ensure soil is well-drained. If fungal particles are visible, consider organic copper fungicide.
+                </Text>
+              </View>
+            )}
+
+            {/* Top Diseases + Similar Images */}
+            {analysisResult.topDiseases.length > 0 && (
+              <View style={styles.diseaseList}>
+                <Text style={styles.sectionHeader}>Matches</Text>
+                {analysisResult.topDiseases.map((d, i) => (
+                  <View key={i} style={styles.diseaseCard}>
+                    <View style={styles.diseaseHeader}>
+                      <Text style={styles.diseaseName} numberOfLines={2}>{d.name}</Text>
+                      <View style={styles.percentBadge}>
+                        <Text style={styles.percentText}>{(d.probability * 100).toFixed(0)}%</Text>
+                      </View>
+                    </View>
+
+                    {/* Similar Images Scroll */}
+                    {d.similarImages && d.similarImages.length > 0 && (
+                      <View style={styles.imageScrollContainer}>
+                        <Text style={styles.similarLabel}>Similar Reference Images:</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                          {d.similarImages.map((img, idx) => (
+                            <Image
+                              key={idx}
+                              source={{ uri: img.url_small }}
+                              style={styles.similarImage}
+                            />
+                          ))}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets: any) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.l,
+    paddingTop: insets.top + spacing.s,
+    paddingBottom: spacing.m,
+    backgroundColor: colors.background,
+  },
+  headerTitle: {
+    fontSize: typography.sizes.large,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginLeft: spacing.m,
+  },
+  backButton: { padding: spacing.s, marginLeft: -spacing.s },
+  scrollContent: { paddingBottom: spacing.xxl },
+  viewfinderContainer: { paddingHorizontal: spacing.l, marginTop: spacing.s },
+  placeholder: {
+    aspectRatio: 1,
+    backgroundColor: colors.card,
+    borderRadius: 32,
+    padding: spacing.m,
+  },
+  dashedBox: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    marginTop: spacing.m,
+    color: colors.textSecondary,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+  },
+  previewWrapper: {
+    aspectRatio: 3 / 4,
+    borderRadius: 32,
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: colors.shadow, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 8,
+  },
+  previewImage: { width: '100%', height: '100%' },
+  closeImageBtn: { position: 'absolute', top: spacing.m, right: spacing.m, zIndex: 10 },
+  controls: { alignItems: 'center', marginTop: spacing.xl },
+  captureButton: {
+    width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center',
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
+  },
+  galleryLink: { marginTop: spacing.l, padding: spacing.s },
+  galleryText: { color: colors.textSecondary, textDecorationLine: 'underline' },
+  actionContainer: { padding: spacing.l, marginTop: spacing.l },
+  analyzeBtn: {
+    backgroundColor: colors.text, borderRadius: 20, paddingVertical: spacing.l, flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+  },
+  analyzeBtnText: { color: colors.background, fontSize: typography.sizes.large, fontWeight: typography.weights.bold, marginRight: spacing.s },
+  centerParams: { alignItems: 'center' },
+  loadingText: { marginTop: spacing.m, color: colors.textSecondary },
+
+  resultsContainer: { padding: spacing.l },
+
+  plantConfidence: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.m,
+    backgroundColor: colors.card, padding: spacing.s, borderRadius: 12, alignSelf: 'center'
+  },
+  plantParamText: { marginLeft: 8, color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+
+  statusCard: {
+    padding: spacing.l, borderRadius: 24, alignItems: 'center', borderWidth: 1, marginBottom: spacing.l,
+  },
+  statusTitle: { fontSize: typography.sizes.header, fontWeight: typography.weights.bold, marginTop: spacing.s },
+  confidenceText: { marginTop: 4, fontWeight: '600' },
+
+  tipBox: {
+    backgroundColor: colors.card, borderRadius: 20, padding: spacing.m, marginBottom: spacing.l,
+    borderLeftWidth: 4, borderLeftColor: colors.primary, borderWidth: 1, borderColor: colors.border,
+  },
+  tipTitle: { fontSize: 15, fontWeight: 'bold', color: colors.text, marginBottom: 4 },
+  tipText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
+
+  diseaseList: {},
+  sectionHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: spacing.m, color: colors.text },
+
+  diseaseCard: {
+    backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
+    borderWidth: 1, borderColor: colors.border
+  },
+  diseaseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.s, gap: spacing.s },
+  diseaseName: { fontSize: 16, fontWeight: '600', color: colors.text, textTransform: 'capitalize', flex: 1 },
+  percentBadge: {
+    backgroundColor: colors.primary + '15',
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  percentText: { fontSize: 14, fontWeight: 'bold', color: colors.primary },
+
+  imageScrollContainer: { marginTop: spacing.s },
+  similarLabel: { fontSize: 12, color: colors.textSecondary, marginBottom: spacing.s },
+  similarImage: { width: 80, height: 80, borderRadius: 12, marginRight: spacing.s, backgroundColor: colors.cardMuted },
+
+  /* Info Card */
+  infoCard: {
+    marginHorizontal: spacing.l, marginTop: spacing.m, padding: spacing.m, backgroundColor: '#F0F9FF', borderRadius: 16, borderWidth: 1, borderColor: '#BAE6FD',
+  },
+  infoHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  infoTitle: { color: '#0369A1', fontWeight: 'bold', marginLeft: 8 },
+  infoText: { color: '#334155', fontSize: 13, lineHeight: 20 }
+});
