@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.dhiraj.agrifarm"
+      "package": "com.dhirajbro.agrifarm"
     },
     "web": {
       "output": "static",
@@ -50,6 +50,6 @@
         "projectId": "f7932e53-3f73-4357-9491-f1516e81b040"
       }
     },
-    "owner": "dhiraj"
+    "owner": "dhirajbro"
   }
 }
