@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+       
+        :root {
+            --purple: #8b5cf6;
+            --orange: #fb923c;
+            --yellow: #fbbf24;
+            --black: #1f2937;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+       
+        body {
+            display: flex;
+            height: 100vh;
+            background: #fff;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .stage {
+            flex: 1;
+            background: #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 40px;
+        }
+        .character-group {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+        .blob {
+            position: absolute;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s cubic-bezier(.2,.9,.25,1);
+        }
+       
+        .blob.orange {
+            width: 145px;
+            height: 115px;
+            background: var(--orange);
+            border-radius: 200px 200px 0 0;
+            left: 2%;
+            z-index: 3;
+            box-shadow: 0 15px 35px rgba(251, 146, 60, 0.25);
+        }
+   
+        .blob.yellow {
+            width: 105px;
+            height: 125px;
+            background: var(--yellow);
+            border-radius: 18px 18px 0 0;
+            right: 18%;
+            z-index: 4;
+            box-shadow: 0 15px 35px rgba(251, 191, 36, 0.25);
+            transform: rotate(-8deg);
+            transform-origin: bottom center;
+        }
+        .blob.black {
+            width: 110px;
+            height: 170px;
+            background: var(--black);
+            border-radius: 52px 52px 0 0;
+            left: 36%;
+            z-index: 2;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+        }
+        .blob.purple {
+            width: 100px;
+            height: 250px;
+            background: var(--purple);
+            border-radius: 20px 20px 0 0;
+            left: 28%;
+            z-index: 1;
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.25);
+            transform: rotate(-12deg);
+            transform-origin: bottom center;
+        }
+        .eyes {
+            display: flex;
+            gap: 12px;
+            position: absolute;
+            transition: opacity 0.15s ease;
+        }
+        .blob.orange .eyes { top: 45%; left: 50%; transform: translateX(-50%); }
+        .blob.black .eyes { top: 40%; left: 50%; transform: translateX(-50%); }
+        .blob.yellow .eyes { top: 36%; left: 50%; transform: translateX(-50%) rotate(8deg); }
+        .blob.purple .eyes { top: 26%; left: 50%; transform: translateX(-50%) rotate(12deg); }
+        .eye {
+            width: 10px;
+            height: 11px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        .pupil {
+            width: 5px;
+            height: 5px;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .hands {
+            position: absolute;
+            display: flex;
+            gap: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: none;
+            z-index: 10;
+        }
+        .blob.orange .hands { top: 45%; left: 50%; transform: translate(-50%, -50%); }
+        .blob.black .hands { top: 40%; left: 50%; transform: translate(-50%, -50%); }
+        .blob.yellow .hands { top: 36%; left: 50%; transform: translate(-50%, -50%) rotate(8deg); }
+        .blob.purple .hands { top: 26%; left: 50%; transform: translate(-50%, -50%) rotate(12deg); }
+        .hand {
+            width: 38px;
+            height: 34px;
+            background: #fbbf24;
+            border-radius: 50% 50% 45% 55%;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+        .blob.orange .mouth,
+        .blob.black .mouth,
+        .blob.yellow .mouth,
+        .blob.purple .mouth {
+            position: absolute;
+            width: 28px;
+            height: 14px;
+            border: 3px solid rgba(0,0,0,0.2);
+            border-top: none;
+            border-radius: 0 0 50px 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: none;
+        }
+        .blob.orange .mouth { bottom: 32px; border-color: rgba(0,0,0,0.2); }
+        .blob.black .mouth { bottom: 30px; border-color: rgba(255,255,255,0.3); }
+        .blob.yellow .mouth { bottom: 33px; border-color: rgba(0,0,0,0.2); }
+        .blob.purple .mouth { bottom: 42px; border-color: rgba(0,0,0,0.2); }
+        .mouth.open {
+            height: 10px !important;
+            border-radius: 50% !important;
+            border: 3px solid rgba(0,0,0,0.2) !important;
+        }
+        .blob.black .mouth.open {
+            border-color: rgba(255,255,255,0.3) !important;
+        }
+        .mouth.excited {
+            height: 20px !important;
+            border-width: 4px !important;
+        }
+        .alone-text {
+            font-size: 64px;
+            font-weight: 800;
+            color: #d1d5db;
+            letter-spacing: 8px;
+            margin-bottom: 20px;
+        }
+        .credits {
+            font-size: 13px;
+            font-weight: 500;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .credits .heart {
+            color: #f43f5e;
+            font-size: 14px;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10% { transform: scale(1.2); }
+            20% { transform: scale(1); }
+        }
+        .form-side {
+            flex: 1;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 60px;
+            align-self: flex-start;
+        }
+        .form-wrapper {
+            width: 100%;
+            max-width: 380px;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #111827;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            color: #374151;
+        }
+        input {
+            width: 100%;
+            padding: 11px 13px;
+            margin-bottom: 18px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        input:focus {
+            border-color: #000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+        }
+        .remember-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+            font-size: 13px;
+        }
+        .remember-row label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        .remember-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .remember-row a {
+            color: #6b7280;
+            text-decoration: none;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-login:hover {
+            background: #1f2937;
+        }
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+        .btn-google {
+            width: 100%;
+            padding: 11px;
+            background: #fff;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-google:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+        .signup-link {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .signup-link a {
+            color: #000;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .blob {
+            animation: breathe 3.5s ease-in-out infinite;
+        }
+        .blob.orange { animation-delay: 0s; }
+        .blob.black { animation-delay: 0.2s; }
+        .blob.yellow { animation-delay: 0.4s; }
+        .blob.purple { animation-delay: 0.6s; }
+        .blob.excited {
+            animation: excited 0.4s ease-in-out;
+        }
+        @keyframes excited {
+            0% { transform: translateY(0); }
+            20% { transform: translateY(-12px) scale(1.05); }
+            40% { transform: translateY(-8px) scale(1.03); }
+            60% { transform: translateY(-10px) scale(1.04); }
+            80% { transform: translateY(-6px) scale(1.02); }
+            100% { transform: translateY(0); }
+        }
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .stage, .form-side { width: 100%; height: 50vh; }
+            .character-group { transform: scale(0.75); }
+        }
+    </style>
+</head>
+<body>
+    <div class="stage">
+        <div class="character-group">
+            <div class="blob orange">
+                <div class="eyes">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye"><div class="pupil"></div></div>
+                </div>
+                <div class="hands">
+                    <div class="hand"></div>
+                    <div class="hand"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+            <div class="blob black">
+                <div class="eyes">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye"><div class="pupil"></div></div>
+                </div>
+                <div class="hands">
+                    <div class="hand"></div>
+                    <div class="hand"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+            <div class="blob yellow">
+                <div class="eyes">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye"><div class="pupil"></div></div>
+                </div>
+                <div class="hands">
+                    <div class="hand"></div>
+                    <div class="hand"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+            <div class="blob purple">
+                <div class="eyes">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye"><div class="pupil"></div></div>
+                </div>
+                <div class="hands">
+                    <div class="hand"></div>
+                    <div class="hand"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+        </div>
+        <div class="alone-text">Alone</div>
+        <div class="credits">
+            Made with <span class="heart">♥</span> by Alone
+        </div>
+    </div>
+    <div class="form-side">
+        <div class="logo">+</div>
+       
+        <div class="form-wrapper">
+            <h1>Welcome back!</h1>
+            <p class="subtitle">Please enter your details</p>
+           
+            <form id="loginForm">
+                <label>Email</label>
+                <input type="email" placeholder="olivia@gmail.com" id="email">
+               
+                <label>Password</label>
+                <input type="password" placeholder="77095498488" id="password">
+               
+                <div class="remember-row">
+                    <label>
+                        <input type="checkbox"> Remember for 30 days
+                    </label>
+                    <a href="#">Forgot password</a>
+                </div>
+               
+                <button type="submit" class="btn-login">Log in</button>
+               
+                <button type="button" class="btn-google">
+                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                        <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9.003 18z" fill="#34A853"/>
+                        <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                        <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.002 0 5.48 0 2.438 2.017.957 4.958L3.964 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335"/>
+                    </svg>
+                    Log in with Google
+                </button>
+            </form>
+            <p class="signup-link">Don't have an account? <a href="#">Sign up</a></p>
+        </div>
+    </div>
+    <script>
+        const blobs = document.querySelectorAll('.blob');
+        const allPupils = document.querySelectorAll('.pupil');
+        const allEyes = document.querySelectorAll('.eyes');
+        const allHands = document.querySelectorAll('.hands');
+        const allMouths = document.querySelectorAll('.mouth');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginForm = document.getElementById('loginForm');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let isPasswordFocused = false;
+
+        document.addEventListener('mousemove', (e) => {
+            if (isPasswordFocused) return;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            updateAllPupils();
+        });
+        function updateAllPupils() {
+            allPupils.forEach(pupil => {
+                const eye = pupil.parentElement;
+                const rect = eye.getBoundingClientRect();
+                const eyeCenterX = rect.left + rect.width / 2;
+                const eyeCenterY = rect.top + rect.height / 2;
+               
+                const dx = mouseX - eyeCenterX;
+                const dy = mouseY - eyeCenterY;
+                const angle = Math.atan2(dy, dx);
+                const distance = Math.min(3, Math.hypot(dx, dy) / 70);
+               
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+               
+                pupil.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
+            });
+        }
+
+        emailInput.addEventListener('focus', () => {
+            const rect = emailInput.getBoundingClientRect();
+            mouseX = rect.left + rect.width / 2;
+            mouseY = rect.top + rect.height / 2;
+            updateAllPupils();
+           
+            allMouths.forEach(mouth => {
+                mouth.classList.add('excited');
+            });
+        });
+
+        emailInput.addEventListener('keydown', () => {
+            allMouths.forEach(mouth => {
+                mouth.classList.add('open');
+            });
+           
+            const randomBlob = blobs[Math.floor(Math.random() * blobs.length)];
+            randomBlob.classList.add('excited');
+            setTimeout(() => {
+                randomBlob.classList.remove('excited');
+            }, 400);
+        });
+        emailInput.addEventListener('keyup', () => {
+            allMouths.forEach(mouth => {
+                mouth.classList.remove('open');
+            });
+        });
+        emailInput.addEventListener('blur', () => {
+            allMouths.forEach(mouth => {
+                mouth.classList.remove('excited');
+                mouth.classList.remove('open');
+            });
+        });
+
+        passwordInput.addEventListener('focus', () => {
+            isPasswordFocused = true;
+           
+            const orangeHands = document.querySelector('.blob.orange .hands');
+            const yellowHands = document.querySelector('.blob.yellow .hands');
+            const orangeEyes = document.querySelector('.blob.orange .eyes');
+            const yellowEyes = document.querySelector('.blob.yellow .eyes');
+           
+            setTimeout(() => {
+                orangeHands.style.opacity = '1';
+                yellowHands.style.opacity = '1';
+            }, 50);
+           
+            setTimeout(() => {
+                orangeEyes.style.opacity = '0';
+                yellowEyes.style.opacity = '0';
+            }, 150);
+           
+            const blackPupils = document.querySelectorAll('.blob.black .pupil');
+            const purplePupils = document.querySelectorAll('.blob.purple .pupil');
+           
+            blackPupils.forEach(pupil => {
+                pupil.style.transform = 'translate(calc(-50% - 7px), calc(-50% + 3px))';
+            });
+           
+            purplePupils.forEach(pupil => {
+                pupil.style.transform = 'translate(calc(-50% + 7px), calc(-50% - 2px))';
+            });
+           
+            allMouths.forEach(mouth => {
+                mouth.classList.remove('excited', 'open');
+            });
+        });
+
+        passwordInput.addEventListener('keydown', () => {
+        });
+
+        passwordInput.addEventListener('blur', () => {
+            isPasswordFocused = false;
+           
+            allHands.forEach(hands => {
+                hands.style.opacity = '0';
+            });
+           
+            setTimeout(() => {
+                allEyes.forEach(eyes => {
+                    eyes.style.opacity = '1';
+                });
+                updateAllPupils();
+            }, 100);
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+           
+            blobs.forEach((blob, i) => {
+                setTimeout(() => {
+                    blob.classList.add('excited');
+                    setTimeout(() => {
+                        blob.classList.remove('excited');
+                    }, 400);
+                }, i * 100);
+            });
+           
+            allMouths.forEach(mouth => {
+                mouth.classList.add('excited');
+                setTimeout(() => {
+                    mouth.classList.remove('excited');
+                }, 600);
+            });
+        });
+
+        updateAllPupils();
+    </script>
+</body>
+</html>
