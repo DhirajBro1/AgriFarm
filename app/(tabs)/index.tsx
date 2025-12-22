@@ -227,7 +227,7 @@ export default function HomeScreen() {
               <Text style={styles.formLabel}>What's your name?</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="e.g., Aman"
+                placeholder="e.g., Aman Shawarma"
                 placeholderTextColor={colors.textSecondary}
                 value={onboardingName}
                 onChangeText={setOnboardingName}
