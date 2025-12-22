@@ -207,7 +207,7 @@ export default function AccountScreen() {
             <Text style={styles.cardTitle}>About</Text>
           </View>
           <Text style={styles.aboutText}>
-            AgriFarm is developed by students of Radhika which helps Nepali farmers plan their crops based on their
+            AgriFarm is developed by students of Radhika School which helps Nepali farmers plan their crops based on their
             province and the current Nepali month. Get personalized recomendations.
           </Text>
           <View style={styles.versionBox}>
