@@ -1,0 +1,23 @@
+Crop Category,Crop Name,Optimal pH Range
+Food Grains,Rice,5.0-6.5
+Food Grains,Maize,5.5-7.5
+Food Grains,Wheat,5.5-7.5
+Food Grains,Millet,5.5-6.5
+Food Grains,Barley,6.5-8.0
+Food Grains,Buckwheat,5.5-7.0
+Vegetables,Potato,4.5-7.5
+Vegetables,Asparagus,5.5-7.0
+Vegetables,Cucumber,6.0-7.5
+Vegetables,Cabbage,6.5-7.5
+Vegetables,Cauliflower,6.0-7.0
+Vegetables,Onion,6.5-7.5
+Vegetables,Radish,6.0-7.4
+Vegetables,Spinach,6.0-7.5
+Vegetables,Tomato,5.5-7.0
+Vegetables,Broccoli,6.0-7.0
+Vegetables,Pumpkin,5.5-7.5
+Fruits,Mango,5.5-7.0
+Fruits,Banana,6.0-7.5
+Fruits,Orange,5.5-6.5
+Fruits,Apple,6.0-8.0
+Fruits,Kiwi,5.0-6.5
