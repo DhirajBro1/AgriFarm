@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CameraService, { CameraResult } from "../services/cameraService";
+import GeminiDiseaseService from "../services/geminiDiseaseService";
 import PlantNetDiseaseService from "../services/plantNetDiseaseService";
 import { ThemeColors, useTheme } from "../theme/ThemeProvider";
 
@@ -38,6 +39,13 @@ interface AnalysisResult {
   }[];
 }
 
+interface DiseaseSolution {
+  diseaseName: string;
+  solutions: string[];
+  preventionTips: string[];
+  summary: string;
+}
+
 export default function DiseaseDetectionScreen() {
   const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
@@ -46,30 +54,72 @@ export default function DiseaseDetectionScreen() {
   const [capturedImage, setCapturedImage] = useState<CameraResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [diseaseSolutions, setDiseaseSolutions] = useState<DiseaseSolution | null>(null);
+  const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
 
   // ... (Camera Logic Same as before) ...
   const handleTakePicture = async () => {
     try {
       const result = await CameraService.takePicture({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-      if (!result.cancelled) { setCapturedImage(result); setAnalysisResult(null); }
+      if (!result.cancelled) { setCapturedImage(result); setAnalysisResult(null); setDiseaseSolutions(null); }
     } catch (error) { Alert.alert("Error", "Failed to take picture."); }
   };
 
   const handlePickImage = async () => {
     try {
       const result = await CameraService.pickImage({ allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-      if (!result.cancelled) { setCapturedImage(result); setAnalysisResult(null); }
+      if (!result.cancelled) { setCapturedImage(result); setAnalysisResult(null); setDiseaseSolutions(null); }
     } catch (error) { Alert.alert("Error", "Failed to pick image."); }
   };
 
   const analyzeDisease = async () => {
     if (!capturedImage?.base64) return;
     setIsAnalyzing(true);
+    console.log('🔍 Starting disease analysis...');
+    
     try {
       const response = await PlantNetDiseaseService.identifyDiseaseFromBase64([capturedImage.base64], true);
       const formattedResult = PlantNetDiseaseService.formatHealthSummary(response);
+      
+      console.log('📊 Analysis result:', formattedResult);
+      console.log('🤒 Is healthy:', formattedResult.isHealthy);
+      console.log('🔬 Top diseases:', formattedResult.topDiseases);
+      
       setAnalysisResult(formattedResult);
+
+      // Always try to get analysis from Gemini (for any result or general advice)
+      console.log('🩺 Getting analysis and recommendations...');
+      setIsLoadingSolutions(true);
+      try {
+        let diseaseToAnalyze = 'General Plant Health';
+        let confidence = 0.5;
+        let isHealthyStatus = formattedResult.isHealthy;
+        
+        if (formattedResult.topDiseases.length > 0) {
+          const topDisease = formattedResult.topDiseases[0];
+          diseaseToAnalyze = topDisease.name;
+          confidence = topDisease.probability;
+          console.log('🎯 Analyzing detected issue:', diseaseToAnalyze, 'confidence:', confidence);
+        } else {
+          console.log('📋 No specific diseases detected, providing general care advice');
+        }
+        
+        const solutions = await GeminiDiseaseService.getDiseaseSolutions(
+          diseaseToAnalyze,
+          confidence,
+          isHealthyStatus
+        );
+        
+        console.log('💊 Analysis received:');
+        setDiseaseSolutions(solutions);
+      } catch (error) {
+        console.error('❌ Error getting analysis:', error);
+        // Don't show alert, just log - analysis is optional enhancement
+      } finally {
+        setIsLoadingSolutions(false);
+      }
     } catch (error) {
+      console.error('❌ Analysis Error:', error);
       Alert.alert("Analysis Error", "Failed to analyze.");
     } finally {
       setIsAnalyzing(false);
@@ -229,6 +279,112 @@ export default function DiseaseDetectionScreen() {
                 ))}
               </View>
             )}
+
+            {/* Disease Solutions */}
+            {diseaseSolutions && (
+              <View style={styles.solutionsContainer}>
+                <Text style={styles.sectionHeader}>Analysis & Care Guide</Text>
+                
+                {/* Disease Summary */}
+                <View style={styles.summaryCard}>
+                  <Text style={[styles.summaryText, { color: colors.text }]}>{diseaseSolutions.summary}</Text>
+                </View>
+
+                {/* Solutions */}
+                <View style={styles.solutionsCard}>
+                  <Text style={styles.subHeader}>Care Recommendations:</Text>
+                  {diseaseSolutions.solutions.map((solution, index) => (
+                    <View key={index} style={styles.solutionItem}>
+                      <Text style={[styles.bulletPoint, { color: colors.primary }]}>•</Text>
+                      <Text style={[styles.solutionText, { color: colors.textSecondary }]}>{solution}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Prevention Tips */}
+                <View style={styles.preventionCard}>
+                  <Text style={styles.subHeader}>General Tips:</Text>
+                  {diseaseSolutions.preventionTips.map((tip, index) => (
+                    <View key={index} style={styles.solutionItem}>
+                      <Text style={[styles.bulletPoint, { color: colors.primary }]}>•</Text>
+                      <Text style={[styles.solutionText, { color: colors.textSecondary }]}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Loading Solutions */}
+            {isLoadingSolutions && (
+              <View style={styles.loadingSolutions}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.loadingSolutionsText}>Getting analysis and care recommendations...</Text>
+              </View>
+            )}
+
+            {/* Debug Info */}
+            {__DEV__ && (
+              <View style={styles.debugContainer}>
+                <Text style={styles.debugText}>
+                  Debug: isHealthy={analysisResult?.isHealthy ? 'true' : 'false'}, 
+                  diseases={analysisResult?.topDiseases?.length || 0}, 
+                  hasSolutions={diseaseSolutions ? 'true' : 'false'}
+                </Text>
+                {analysisResult?.topDiseases?.length > 0 && (
+                  <Text style={styles.debugText}>
+                    Top disease: {analysisResult.topDiseases[0].name} ({(analysisResult.topDiseases[0].probability * 100).toFixed(0)}%)
+                  </Text>
+                )}
+                <TouchableOpacity 
+                  style={styles.testButton}
+                  onPress={async () => {
+                    console.log('🧪 Testing Gemini API with disease...');
+                    try {
+                      const testSolutions = await GeminiDiseaseService.getDiseaseSolutions('Powdery Mildew', 0.85, false);
+                      console.log('✅ Disease test successful:', testSolutions);
+                      setDiseaseSolutions(testSolutions);
+                      setAnalysisResult({
+                        isHealthy: false,
+                        healthProbability: 0.15,
+                        isPlant: true,
+                        plantProbability: 0.95,
+                        topDiseases: [{
+                          name: 'Powdery Mildew',
+                          probability: 0.85,
+                          similarImages: []
+                        }]
+                      });
+                    } catch (error) {
+                      console.error('❌ Disease test failed:', error);
+                    }
+                  }}
+                >
+                  <Text style={styles.testButtonText}>Test Disease</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.testButton, { backgroundColor: '#2196F3', marginTop: 8 }]}
+                  onPress={async () => {
+                    console.log('🧪 Testing Gemini API with healthy plant...');
+                    try {
+                      const testSolutions = await GeminiDiseaseService.getDiseaseSolutions('General Plant Health', 0.5, true);
+                      console.log('✅ Healthy test successful:', testSolutions);
+                      setDiseaseSolutions(testSolutions);
+                      setAnalysisResult({
+                        isHealthy: true,
+                        healthProbability: 0.95,
+                        isPlant: true,
+                        plantProbability: 0.95,
+                        topDiseases: []
+                      });
+                    } catch (error) {
+                      console.error('❌ Healthy test failed:', error);
+                    }
+                  }}
+                >
+                  <Text style={styles.testButtonText}>Test Healthy</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -349,9 +505,43 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
 
   /* Info Card */
   infoCard: {
-    marginHorizontal: spacing.l, marginTop: spacing.m, padding: spacing.m, backgroundColor: '#F0F9FF', borderRadius: 16, borderWidth: 1, borderColor: '#BAE6FD',
+    marginHorizontal: spacing.l, marginTop: spacing.m, padding: spacing.m, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border,
   },
   infoHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  infoTitle: { color: '#0369A1', fontWeight: 'bold', marginLeft: 8 },
-  infoText: { color: '#334155', fontSize: 13, lineHeight: 20 }
+  infoTitle: { color: colors.primary, fontWeight: 'bold', marginLeft: 8 },
+  infoText: { color: colors.textSecondary, fontSize: 13, lineHeight: 20 },
+
+  /* Solutions Section */
+  solutionsContainer: { marginTop: spacing.l },
+  summaryCard: {
+    backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
+    borderWidth: 1, borderColor: colors.border
+  },
+  summaryText: { fontSize: 20, color: colors.textSecondary, lineHeight: 20 },
+  solutionsCard: {
+    backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
+    borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.success
+  },
+  preventionCard: {
+    backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
+    borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.warning
+  },
+  subHeader: { fontSize: 23, fontWeight: 'bold', color: colors.text, marginBottom: spacing.s },
+  solutionItem: { flexDirection: 'row', marginBottom: spacing.xs, alignItems: 'flex-start' },
+  bulletPoint: { fontSize: 16, color: colors.text, marginRight: spacing.s, marginTop: -2 },
+  solutionText: { fontSize: 20, color: colors.textSecondary, lineHeight: 20, flex: 1 },
+  loadingSolutions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: spacing.m },
+  loadingSolutionsText: { marginLeft: spacing.s, color: colors.textSecondary, fontSize: 14 },
+
+  /* Debug Info */
+  debugContainer: {
+    backgroundColor: colors.card, borderRadius: 8, padding: spacing.s, marginTop: spacing.m,
+    borderWidth: 1, borderColor: colors.border
+  },
+  debugText: { fontSize: 12, color: colors.textSecondary, fontFamily: 'monospace' },
+  testButton: {
+    backgroundColor: colors.primary, padding: spacing.s, borderRadius: 6, marginTop: spacing.s,
+    alignItems: 'center'
+  },
+  testButtonText: { color: colors.background, fontSize: 14, fontWeight: 'bold' }
 });

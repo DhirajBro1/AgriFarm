@@ -18,7 +18,22 @@ export default function RootLayout() {
   const segments = useSegments();
   const [isChecking, setIsChecking] = useState(true);
   const [hasChecked, setHasChecked] = useState(false);
+  // 🔁 OTA UPDATE CHECK (runs once on app start)
+  useEffect(() => {
+    async function checkForOTA() {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (e) {
+        console.log('OTA update error:', e);
+      }
+    }
 
+    checkForOTA();
+  }, []);
   useEffect(() => {
     // Only check once when the app first loads
     if (!hasChecked) {

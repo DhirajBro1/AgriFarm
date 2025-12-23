@@ -377,8 +377,9 @@ class PlantNetDiseaseService {
     const formattedResults = this.formatResults(response);
 
     // Determine if plant is healthy based on disease scores
+    // Lower threshold to catch more potential issues
     const hasSignificantDisease = formattedResults.some(
-      (result) => result.confidence > 50,
+      (result) => result.confidence > 30, // Changed from 50 to 30
     );
     const isHealthy = !hasSignificantDisease;
     const healthProbability = isHealthy

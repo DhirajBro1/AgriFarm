@@ -3,15 +3,13 @@
     "name": "AgriFarm",
     "slug": "agrifarm",
     "version": "1.0.1",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.1",
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/9068b02a-c332-418f-9d14-cdb1dd95e889"
     },
-
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "agrifarm",
@@ -20,7 +18,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dhirajbro1.agrifarm"
-      
     },
     "android": {
       "adaptiveIcon": {

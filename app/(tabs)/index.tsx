@@ -23,6 +23,7 @@ import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser, { CropData } from "../../utils/csvParser";
 import { getCurrentNepaliMonth, getGreeting, REGIONS, RegionType } from "../../utils/farmingData";
 
+
 export default function HomeScreen() {
   const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
