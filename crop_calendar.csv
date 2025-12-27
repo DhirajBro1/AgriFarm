@@ -1,0 +1,69 @@
+Region,Crop Name (English),Crop Name (Nepali),Variety/Type,Varieties,Spacing (cm),Seed Rate,Intercrop,Climate Adaptation/Resilience,Planting Months
+High Hill,Cauliflower,काउली,General,"Kathmandu Local, Khumal Chapu, Snowball 16",60x45,30g,"Coriander, Garlic","Wastewater irrigation, DBM water traps",Chaitra-Jestha / Ashoj-Kartik
+High Hill,Cabbage,बन्दकोपी,General,"Super Green, Green Coronet, Zenith, T621",60x45,25g,"Coriander, Garlic",Disease resistant,Chaitra-Jestha / Ashoj-Mangsir
+High Hill,Broccoli,ब्रोकाउली,General,"Everest Green, Premium Crop, Green Pea",60x45,10g,"Coriander, Garlic",Temp control,Chaitra-Jestha / Ashoj-Kartik
+High Hill,Tomato,गोलभेडा,Plastic House,"Srijana, Gaurav 555, Dalila, Seres",75x45,5-7g,"Pea, Coriander, Garlic","Drip irrigation, Tuta/fruit borer traps",Year-round
+High Hill,Tomato,गोलभेडा,Open Field,"Srijana, Gaurav 555, Dalila, Surya 111",75x45,5-7g,"Pea, Coriander",Pest traps,Chaitra-Shrawan
+High Hill,Cucumber,काँक्रा,General,"Bhaktapur Local, Dynasty, Malini",150x100,125g,"Garlic, Onion","Tunnel method, Fruit fly/Red beetle traps",Baisakh-Shrawan
+High Hill,Bitter Gourd,करेला,General,"Palee, NS 454, Hira, Maya",150x100,100g,"Garlic, Onion",Cow urine for aphids,Baisakh-Bhadra
+High Hill,Bean,सिमी,General,"Chaumase, LB 37, Long Green, Rajma",120x50,500g,"Pea, Maize",Virus control/Net nursery,Baisakh-Bhadra
+High Hill,Capsicum,भेडे खुर्सानी,General,"California Wonder, NS 632",60x45,30g,Coriander,Virus control/Net nursery,Chaitra-Shrawan / Ashoj-Kartik
+High Hill,Mustard Greens,रायो साग,General,"Khumal Chaudapat, Marfa, Manakamana",45x30,10g,"Coriander, Garlic",Succession planting,Year-round
+High Hill,Okra,भिण्डी,General,"Arka Anamika, Parbati",50x30,750g,"Maize, Cowpea",Cotton aphid/Borer traps,Baisakh-Bhadra
+High Hill,Radish,मूला,General,"Minowase, All Season White, Tokinashi",20x20,500g,"Coriander, Garlic",Spacing and thinning,Year-round
+High Hill,Chili,खुर्सानी,General,"Jwala, NS 1701, Karma 747",50x30,30g,Coriander,Virus control/Net nursery,Chaitra-Shrawan / Ashoj-Kartik
+High Hill,Potato,आलु,General,"Kufri Jyoti, Janakdev, Khumal Laxmi",70x25,100kg,"Radish, Carrot",Deep plowing for red ants,Ashoj-Magh
+High Hill,Foxtail Millet,कागुनो,Traditional,"Bariyo, Rato Kaguno",30x10,3kg,Bean,Drought tolerant,Baisakh-Shrawan
+High Hill,Proso Millet,चिनो,Traditional,Dudhe Chino,25x10,500g,None,Marginal land use,Baisakh-Shrawan
+High Hill,Finger Millet,कोदो,Traditional,"Okhle 1, Dalle 1, Kabre 1",20x10,500g,"Maize, Bean",Low irrigation requirement,Baisakh-Shrawan
+High Hill,Barley,उवा,Traditional,Solu Uwa,20x5,1.5kg,None,Cold tolerant,Kartik-Chaitra
+High Hill,Buckwheat,फापर,Traditional,"Mithe 1, Tite 1 & 2",25x5,3.5kg,None,Quick growing,Jestha-Shrawan / Kartik-Magh
+Mid Hill,Cauliflower,काउली,Early,"Silver Cup 60, Nepa 60, NS 60",45x45,30g,"Coriander, Bean",Yellow sticky/DBM traps,Chaitra-Baisakh
+Mid Hill,Cauliflower,काउली,Seasonal,"Pro Crown, Kathmandu Local",60x45,20g,"Coriander, Bean",Wastewater irrigation,Ashar-Ashoj
+Mid Hill,Cauliflower,काउली,Late,"NS 90, NS 106, Madhuri",60x45,15g,"Coriander, Bean",IPM methods,Ashoj-Poush
+Mid Hill,Cabbage,बन्दा,Early,"Super Coronet, Copenhagen Market",60x45,25g,"Coriander, Bean",Proper spacing,Chaitra-Baisakh
+Mid Hill,Cabbage,बन्दा,Seasonal,"Green Coronet, T 621, Zenith",60x45,25g,"Coriander, Bean",IPM methods,Ashar-Ashoj
+Mid Hill,Broccoli,ब्रोकाउली,General,"Everest Green, Premium Crop",60x45,10g,"Coriander, Bean",Temp control,Ashar-Ashoj
+Mid Hill,Tomato,गोलभेडा,Seasonal,"Srijana, Suraksha, Manisha, VL 443",75x45,5-7g,"Radish, Beetroot","Tunnel, Drip, Tuta traps",Year-round
+Mid Hill,Cucumber,काँक्रा,General,"Bhaktapur Local, Dynasty, Malini",150x100,125g,"Maize, Garlic",Tunnel/Fruit fly traps,Chaitra-Bhadra
+Mid Hill,Bitter Gourd,करेला,General,"Palee, NS 454, Hira",150x100,100g,"Garlic, Onion",Aphid control,Chaitra-Bhadra
+Mid Hill,Summer Squash,फर्सी,General,"Sunny House, Solo V, Local",150x100,100g,Coriander,Regular harvesting,Chaitra-Bhadra
+Mid Hill,Bean,सिमी,General,"Chaumase, LB 37, Trisuli Green",120x50,500g,"Pea, Maize",Cow urine for aphids,Chaitra-Bhadra
+Mid Hill,Green Pea,हरियो केराउ,General,"Sikkim Local, Sarlahi Arkul",60x60,2kg,"Wheat, Barley",Support structures,Kartik-Chaitra
+Mid Hill,Cowpea,बोडी,General,"Malepatan 1, Khumal Tane",120x30,2kg,"Maize, Millet",Pheromone traps,Chaitra-Shrawan
+Mid Hill,Capsicum,भेडे खुर्सानी,General,California Wonder,60x45,30g,Coriander,Virus control/Net nursery,Chaitra-Shrawan / Ashoj-Kartik
+Mid Hill,Mustard Greens,रायो साग,General,"Manakamana Rayo, Tangkhuwa",45x30,10g,Garlic,Succession planting,Year-round
+Mid Hill,Okra,भिण्डी,General,"Arka Anamika, Parbati",50x30,750g,"Maize, Cowpea",Borer traps,Chaitra-Bhadra
+Mid Hill,Radish,मूला,40-Day,Chalis Dine,20x20,500g,Garlic,Quick harvest rotation,Year-round
+Mid Hill,Radish,मूला,General,"Minowase, Tokinashi",20x20,500g,Coriander,Root quality/Spacing,Year-round
+Mid Hill,Carrot,गाजर,General,"New Kuroda, Nantes",30x10,300g,Garlic,Soil preparation,Ashoj-Magh
+Mid Hill,Chili,खुर्सानी,General,"Jwala, NS 1702, Nepa Hot",50x30,30g,Coriander,Virus control/Net nursery,Year-round
+Mid Hill,Potato,आलु,General,"Cardinal, Kufri Jyoti, Janakdev",70x25,100kg,"Radish, Greens",Deep plowing for red ants,Ashoj-Magh
+Mid Hill,Turmeric,बेसार,General,"Kapurkot Haledo 1 & 2",30x25,225kg,Maize,Mulching/Low irrigation,Baisakh (Planting)
+Mid Hill,Ginger,अदुवा,General,"Kapurkot Aduwa 1 & 2",30x25,150kg,"Maize, Lemongrass",Organic/Plastic mulch,Baisakh (Planting)
+Mid Hill,Foxtail Millet,कागुनो,Traditional,"Bariyo, Rato Kaguno",30x10,750g,Bean,Drought resilient,Baisakh-Shrawan
+Mid Hill,Proso Millet,चिनो,Traditional,Dudhe Chino,25x10,500g,None,Marginal land use,Baisakh-Shrawan
+Mid Hill,Finger Millet,कोदो,Traditional,"Okhle 1, Dalle 1, Kabre 1",20x10,500g,"Maize, Bean",Drought tolerant,Baisakh-Shrawan
+Mid Hill,Buckwheat,फापर,Traditional,"Mithe 1, Tite 1 & 2",25x5,2.5kg,None,Quick growing,Jestha-Shrawan / Kartik-Magh
+Terai,Cauliflower,काउली,Early,"Sarlahi Dipali, Silver Cup 60",45x45,30g,"Coriander, Garlic","DBM water traps, Sticky traps",Ashoj-Mangsir
+Terai,Cauliflower,काउली,Seasonal,"Pro Crown, Kathmandu Local",60x45,20g,"Coriander, Garlic",Wastewater irrigation,Kartik-Magh
+Terai,Cauliflower,काउली,Late,"Promistic, Madhuri, Dolpa Global",60x45,15g,"Coriander, Garlic",IPM methods,Magh-Chaitra
+Terai,Cabbage,बन्दकोपी,Early,Super Green,60x45,25g,"Coriander, Bean",Proper spacing,Ashoj-Kartik
+Terai,Cabbage,बन्दकोपी,Seasonal,"Green Coronet, Zenith, Golden Ball",60x45,25g,"Coriander, Garlic",IPM methods,Kartik-Mangsir
+Terai,Cabbage,बन्दकोपी,Late,Copenhagen Market,45x30,25g,Onion,IPM methods,Mangsir-Magh
+Terai,Broccoli,ब्रोकाउली,Early,Green Sprouting,60x45,10g,"Coriander, Garlic",Temp control,Bhadra-Ashoj
+Terai,Broccoli,ब्रोकाउली,Seasonal,"Pinnacle, Comet",60x45,10g,"Coriander, Garlic",High value crop,Ashoj-Kartik
+Terai,Tomato,गोलभेडा,Seasonal,"Srijana, Samjhana, Suraksha",75x45,5-10g,"Garlic, Onion",Fruit borer traps,Baisakh-Jestha
+Terai,Tomato,गोलभेडा,Winter,"Navin, Manisha, NS 515",75x45,5-10g,Garlic,Plastic house tech,Bhadra-Ashoj
+Terai,Bottle Gourd,लौका,General,"Sarlahi Chini, NS 717, Pusa Naveen",100x75,100g,Coriander,Fruit fly traps,Magh-Baisakh / Bhadra
+Terai,Sponge Gourd,घिरौंला,General,"Kantipure, Century, Rammani",200x200,200g,Garlic,Pest traps,Magh-Chaitra
+Terai,Chichinda,चिचिन्डा,General,"Haritali, Local",150x100,100g,Garlic,Vertical support,Magh-Chaitra
+Terai,Cucumber,काँक्रा,General,"Bhaktapur Local, Dynasty, Malini",150x100,125g,Garlic,Drip irrigation,Magh-Chaitra
+Terai,Bitter Gourd,करेला,General,"Palee, NS 454, Hira",200x200,200g,Onion,Borer control,Magh-Chaitra
+Terai,Summer Squash,फर्सी,General,Sunny House,150x100,100g,Coriander,Succession harvest,Magh-Chaitra
+Terai,Capsicum,भेडे खुर्सानी,General,California Wonder,60x45,30g,Coriander,Virus protection,Bhadra-Ashoj
+Terai,Mustard Greens,रायो साग,General,Khumal Ratopat,30x30,10g,Garlic,IPM technology,Kartik-Mangsir
+Terai,Okra,भिण्डी,General,"Arka Anamika, Parbati, Namdhari",50x30,750g,Maize,Borer traps,Falgun-Ashad
+Terai,Radish,मूला,Various,"Minowase, 40-Day, White Neck",20x20,500g,Garlic,Rotation with legumes,Bhadra-Mangsir
+Terai,Chili,खुर्सानी,General,"NS 1701, Marshall, Karma",75x45,30g,Coriander,Virus control,Bhadra-Ashoj
+Terai,Potato,आलु,General,"Kufri Sinduri, Cardinal, Desiree",70x25,100kg,"Radish, Greens",Red ant control,Ashoj-Mangsir
