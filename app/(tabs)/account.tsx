@@ -14,11 +14,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import { REGIONS, RegionType } from "../../utils/farmingData";
+import { t, setLanguage as i18nSetLanguage, getLanguage, subscribe } from "../../utils/i18n";
 
 export default function AccountScreen() {
   const { colors, theme, toggleTheme, typography, spacing } = useTheme();
@@ -27,6 +29,9 @@ export default function AccountScreen() {
 
   const [username, setUsername] = useState("Farmer");
   const [region, setRegion] = useState<RegionType>("mid");
+  const [language, setLanguage] = useState<'en' | 'ne'>(getLanguage());
+  const [geminiLanguage, setGeminiLanguage] = useState<'en' | 'ne'>(getLanguage());
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Edit Mode State
   const [isEditing, setIsEditing] = useState(false);
@@ -37,9 +42,29 @@ export default function AccountScreen() {
     loadUserData();
   }, []);
 
+  useEffect(() => {
+    const unsub = subscribe((l) => setLanguage(l));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    // load gemini language preference (separate from UI language)
+    (async () => {
+      try {
+        const g = await AsyncStorage.getItem('gemini_language');
+        if (g === 'ne' || g === 'en') setGeminiLanguage(g);
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, []);
+
+  
+
   const loadUserData = async () => {
     const storedUsername = await AsyncStorage.getItem("username");
     const storedRegion = await AsyncStorage.getItem("region");
+    const storedLanguage = await AsyncStorage.getItem('language');
     if (storedUsername) {
       setUsername(storedUsername);
       setEditName(storedUsername);
@@ -47,6 +72,11 @@ export default function AccountScreen() {
     if (storedRegion) {
       setRegion(storedRegion as RegionType);
       setEditRegion(storedRegion as RegionType);
+    }
+    if (storedLanguage === 'ne' || storedLanguage === 'en') {
+      // Delegate persistence to i18n module and update local state
+      await i18nSetLanguage(storedLanguage as 'en' | 'ne');
+      setLanguage(storedLanguage as 'en' | 'ne');
     }
   };
 
@@ -78,6 +108,28 @@ export default function AccountScreen() {
     }
   };
 
+  const toggleLanguage = async () => {
+    const next = language === 'en' ? 'ne' : 'en';
+    try {
+      await i18nSetLanguage(next);
+      setLanguage(next);
+    } catch (e) {
+      console.error('Failed to save language:', e);
+    }
+  };
+
+  const toggleGeminiLanguage = async () => {
+    const next = geminiLanguage === 'en' ? 'ne' : 'en';
+    try {
+      await AsyncStorage.setItem('gemini_language', next);
+      setGeminiLanguage(next);
+    } catch (e) {
+      console.error('Failed to save gemini language:', e);
+    }
+  };
+
+  const toggleAdvanced = () => setAdvancedOpen(prev => !prev);
+
   const handleCancel = () => {
     setEditName(username);
     setEditRegion(region);
@@ -104,7 +156,7 @@ export default function AccountScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Account</Text>
+        <Text style={styles.headerTitle}>{t('account')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -127,15 +179,15 @@ export default function AccountScreen() {
               </View>
               <TouchableOpacity style={styles.editBtn} onPress={() => setIsEditing(true)}>
                 <Ionicons name="create-outline" size={20} color={colors.text} />
-                <Text style={styles.editBtnText}>Edit Profile</Text>
+                <Text style={styles.editBtnText}>{t('editProfile')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             // EDIT MODE
             <View style={styles.editContainer}>
-              <Text style={styles.sectionTitle}>Edit Profile</Text>
+              <Text style={styles.sectionTitle}>{t('editProfile')}</Text>
 
-              <Text style={styles.inputLabel}>Display Name</Text>
+              <Text style={styles.inputLabel}>{t('displayName')}</Text>
               <TextInput
                 style={styles.input}
                 value={editName}
@@ -144,7 +196,7 @@ export default function AccountScreen() {
                 placeholderTextColor={colors.textSecondary}
               />
 
-              <Text style={styles.inputLabel}>Select Region</Text>
+              <Text style={styles.inputLabel}>{t('selectRegion')}</Text>
               <View style={styles.regionGrid}>
                 {REGIONS.map((r) => (
                   <TouchableOpacity
@@ -167,10 +219,10 @@ export default function AccountScreen() {
 
               <View style={styles.editActions}>
                 <TouchableOpacity style={styles.saveAction} onPress={handleSave}>
-                  <Text style={styles.saveText}>Save Changes</Text>
+                  <Text style={styles.saveText}>{t('saveChanges')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelAction} onPress={handleCancel}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                  <Text style={styles.cancelText}>{t('cancel')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -181,12 +233,12 @@ export default function AccountScreen() {
         <View style={styles.settingsCard}>
           <View style={styles.cardHeader}>
             <Ionicons name="settings-outline" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>Preferences</Text>
+            <Text style={styles.cardTitle}>{t('preferences')}</Text>
           </View>
 
           <MenuItem
             icon="moon"
-            label="Dark Mode"
+            label={t('darkMode')}
             description="Toggle app theme"
             value={
               <Switch
@@ -196,22 +248,61 @@ export default function AccountScreen() {
               />
             }
           />
-          <MenuItem icon="notifications" label="Notifications" description="Manage alerts" />
-          <MenuItem icon="language" label="Language" description="English / Nepali" />
+          <MenuItem
+            icon="notifications"
+            label={t('notifications')}
+            description="Manage alerts"
+          />
+          <MenuItem
+            icon="language"
+            label={t('language')}
+            description={language === 'en' ? 'English' : 'नेपाली'}
+            onPress={async () => {
+              // Toggle app UI language (this affects all t(...) strings)
+              const next = language === 'en' ? 'ne' : 'en';
+              try {
+                await i18nSetLanguage(next);
+                setLanguage(next);
+              } catch (e) {
+                console.error('Failed to toggle app language', e);
+              }
+            }}
+            value={<Text style={{ color: colors.text }}>{language === 'en' ? 'English' : 'नेपाली'}</Text>}
+          />
+          <MenuItem
+            icon="settings"
+            label={t('advanced')}
+            description={t('advancedDescription')}
+            onPress={toggleAdvanced}
+            value={
+              <Ionicons name={advancedOpen ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
+            }
+          />
+
+          {advancedOpen && (
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.text, fontWeight: '600' }}>{t('geminiLanguageShort')}</Text>
+                <TouchableOpacity onPress={toggleGeminiLanguage} style={{ padding: 8, backgroundColor: colors.cardMuted, borderRadius: 8 }}>
+                  <Text style={{ color: colors.text }}>{geminiLanguage === 'en' ? 'English' : 'नेपाली'}</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={{ color: colors.textSecondary, marginTop: 6, fontSize: 12 }}>
+                {t('geminiLanguageNote')}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* About App */}
         <View style={styles.settingsCard}>
           <View style={styles.cardHeader}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>About</Text>
+            <Text style={styles.cardTitle}>{t('about')}</Text>
           </View>
-          <Text style={styles.aboutText}>
-            AgriFarm is developed by IT group of Radhika Secondary School which helps Nepali farmers plan their crops based on their
-            province and the current Nepali month. Get personalized recomendations.
-          </Text>
+          <Text style={styles.aboutText}>{t('aboutText')}</Text>
           <View style={styles.versionBox}>
-            <Text style={styles.versionText}>Version 1.0.2</Text>
+            <Text style={styles.versionText}>{t('version')} 1.0.3</Text>
           </View>
         </View>
 

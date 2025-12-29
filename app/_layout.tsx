@@ -1,8 +1,13 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { initLanguage } from '../utils/i18n';
 
 export default function RootLayout() {
+  React.useEffect(() => {
+    // Initialize persisted language before screens render
+    initLanguage().catch(() => {});
+  }, []);
   return (
     <ThemeProvider>
       <Stack

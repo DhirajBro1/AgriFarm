@@ -13,12 +13,14 @@ class GeminiDiseaseService {
 
   private static getGenAI(): GoogleGenerativeAI {
     if (!this.API_KEY) {
+      console.error('❌ Gemini API key not found. Current env:', process.env);
       throw new Error(
         'Gemini API key is not configured. Please add EXPO_PUBLIC_GEMINI_API_KEY to your .env file.',
       );
     }
 
     if (!this.genAI) {
+      console.log('🔑 Initializing Gemini with API key:', this.API_KEY.substring(0, 10) + '...');
       this.genAI = new GoogleGenerativeAI(this.API_KEY);
     }
 
@@ -36,16 +38,19 @@ class GeminiDiseaseService {
     diseaseName: string,
     confidence: number,
     isHealthy: boolean = true,
+    language: 'en' | 'ne' = 'en',
   ): Promise<DiseaseSolution> {
-    console.log('🔍 Gemini Service: Getting solutions for disease:', diseaseName, 'with confidence:', confidence, 'isHealthy:', isHealthy);
+    console.log('🔍 Gemini Service: Getting solutions for disease:', diseaseName, 'with confidence:', confidence, 'isHealthy:', isHealthy, 'language:', language);
     
     try {
       const genAI = this.getGenAI();
-      const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       const healthStatus = isHealthy ? 'healthy' : 'potentially diseased';
       
       let prompt;
+      const langInstruction = language === 'ne' ? 'Respond in Nepali (नेपाली) in clear, simple language.' : 'Respond in English in clear, simple language.';
+
       if (diseaseName === 'General Plant Health') {
         prompt = `
 You are an expert agricultural specialist helping a farmer or gardener understand plant health results.
@@ -93,6 +98,9 @@ Format your response as JSON with this exact structure:
 Use simple, conversational language that anyone can understand. If the plant appears healthy, focus on general care tips rather than treatments.
 `;
       }
+
+  // Append language instruction so Gemini responds in selected language
+  prompt = `${prompt}\n\n${langInstruction}`;
 
       console.log('🤖 Gemini Service: Sending prompt to Gemini API');
       const result = await model.generateContent(prompt);
@@ -163,7 +171,39 @@ Use simple, conversational language that anyone can understand. If the plant app
     //     }
     //   }
       
-      throw new Error('Failed to get disease solutions. Please try again.');
+           throw new Error('Failed to get disease solutions. Please try again.');
+    }
+  }
+
+  /**
+   * Sends a general prompt to Gemini and returns the raw text response.
+   * Useful for short chatbot-style queries from the UI (e.g., AgriBot).
+   */
+  static async ask(prompt: string, language: 'en' | 'ne' = 'en'): Promise<string> {
+    console.log('🤖 AgriBot: Asking Gemini with prompt:', prompt, 'language:', language);
+    try {
+      const genAI = this.getGenAI();
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const langInstruction =
+        language === 'ne'
+          ? 'Respond in Nepali (नेपाली) in clear, simple language.'
+          : 'Respond in English in clear, simple language.';
+
+      const fullPrompt = `${prompt}\n\n${langInstruction}`;
+
+      const result = await model.generateContent(fullPrompt);
+      const response = await result.response;
+      let text = response.text();
+
+      if (text.startsWith('```')) {
+        text = text.replace(/^```[a-zA-Z\n]*\n?/, '').replace(/\n?```$/, '');
+      }
+
+      return text.trim();
+    } catch (error) {
+      console.error('❌ Gemini ask Error:', error);
+      throw new Error('Failed to get response from Gemini.');
     }
   }
 }

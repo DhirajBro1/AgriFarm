@@ -4,7 +4,8 @@
  */
 
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { t, subscribe, tOr } from "../../utils/i18n";
 import {
   ScrollView,
   StyleSheet,
@@ -23,6 +24,12 @@ export default function TipsScreen() {
 
   const [expandedTip, setExpandedTip] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [language, setLanguage] = useState('en');
+
+  useEffect(() => {
+    const unsub = subscribe((l) => setLanguage(l));
+    return unsub;
+  }, []);
 
   const categories = ["all", "watering", "fertilizer", "planting", "harvesting"];
 
@@ -33,7 +40,7 @@ export default function TipsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Farming Tips</Text>
+        <Text style={styles.headerTitle}>{t('farmingTips')}</Text>
       </View>
 
       <View style={styles.filterContainer}>
@@ -45,7 +52,7 @@ export default function TipsScreen() {
               onPress={() => setSelectedCategory(cat)}
             >
               <Text style={[styles.pillText, selectedCategory === cat && styles.pillTextActive]}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {t(cat)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -65,8 +72,8 @@ export default function TipsScreen() {
                 <Ionicons name="bulb" size={24} color="#F59E0B" />
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.tipTitle}>{tip.title}</Text>
-                <Text style={styles.tipCategory}>{tip.category}</Text>
+                <Text style={styles.tipTitle}>{tOr(`${tip.id}.title`, tip.title)}</Text>
+                <Text style={styles.tipCategory}>{tOr(`${tip.id}.category`, tip.category)}</Text>
               </View>
               <View style={[
                 styles.arrowBox,
@@ -82,10 +89,10 @@ export default function TipsScreen() {
 
             {expandedTip === tip.id && (
               <View style={styles.cardBody}>
-                <Text style={styles.description}>{tip.description}</Text>
+                <Text style={styles.description}>{tOr(`${tip.id}.description`, tip.description)}</Text>
                 {tip.season && (
                   <View style={styles.tag}>
-                    <Text style={styles.tagText}>Best for: {tip.season}</Text>
+                    <Text style={styles.tagText}>{tOr(`${tip.id}.season`, `Best for: ${tip.season}`)}</Text>
                   </View>
                 )}
               </View>

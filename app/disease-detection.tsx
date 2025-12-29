@@ -4,7 +4,7 @@
  */
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -19,7 +19,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CameraService, { CameraResult } from "../services/cameraService";
 import GeminiDiseaseService from "../services/geminiDiseaseService";
 import PlantNetDiseaseService from "../services/plantNetDiseaseService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemeColors, useTheme } from "../theme/ThemeProvider";
+import { t, getLanguage, subscribe } from "../utils/i18n";
 
 // ... Interfaces maintained ...
 interface AnalysisResult {
@@ -56,6 +58,12 @@ export default function DiseaseDetectionScreen() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [diseaseSolutions, setDiseaseSolutions] = useState<DiseaseSolution | null>(null);
   const [isLoadingSolutions, setIsLoadingSolutions] = useState(false);
+  const [language, setLanguage] = useState(getLanguage());
+
+  useEffect(() => {
+    const unsub = subscribe((l) => setLanguage(l));
+    return unsub;
+  }, []);
 
   // ... (Camera Logic Same as before) ...
   const handleTakePicture = async () => {
@@ -104,12 +112,15 @@ export default function DiseaseDetectionScreen() {
           console.log('📋 No specific diseases detected, providing general care advice');
         }
         
+        const storedGeminiLang = await AsyncStorage.getItem('gemini_language');
+        const lang = storedGeminiLang === 'ne' ? 'ne' : 'en';
         const solutions = await GeminiDiseaseService.getDiseaseSolutions(
           diseaseToAnalyze,
           confidence,
-          isHealthyStatus
+          isHealthyStatus,
+          lang
         );
-        
+
         console.log('💊 Analysis received:');
         setDiseaseSolutions(solutions);
       } catch (error) {
@@ -133,7 +144,7 @@ export default function DiseaseDetectionScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Scan Plant</Text>
+        <Text style={styles.headerTitle}>{t('scanPlant')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -154,7 +165,7 @@ export default function DiseaseDetectionScreen() {
             <TouchableOpacity style={styles.placeholder} onPress={handleTakePicture}>
               <View style={styles.dashedBox}>
                 <Ionicons name="scan-outline" size={48} color={colors.textSecondary} />
-                <Text style={styles.placeholderText}>Tap to Scan Leaf</Text>
+                <Text style={styles.placeholderText}>{t('tapToScan')}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -165,13 +176,9 @@ export default function DiseaseDetectionScreen() {
           <View style={styles.infoCard}>
             <View style={styles.infoHeader}>
               <Ionicons name="information-circle" size={20} color="#2196F3" />
-              <Text style={styles.infoTitle}>How it works</Text>
+              <Text style={styles.infoTitle}>{t('howItWorks')}</Text>
             </View>
-            <Text style={styles.infoText}>
-              • Take a clear photo of the affected plant part{"\n"}
-              • PlantNet AI analyzes the image for diseases{"\n"}
-              • Get detailed results with similar cases
-            </Text>
+            <Text style={styles.infoText}>{t('howItWorksText')}</Text>
           </View>
         )}
 
@@ -182,7 +189,7 @@ export default function DiseaseDetectionScreen() {
               <Ionicons name="camera" size={32} color="#FFF" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.galleryLink} onPress={handlePickImage}>
-              <Text style={styles.galleryText}>or upload from gallery</Text>
+              <Text style={styles.galleryText}>{t('uploadFromGallery')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -193,11 +200,11 @@ export default function DiseaseDetectionScreen() {
             {isAnalyzing ? (
               <View style={styles.centerParams}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Analyzing leaf patterns...</Text>
+                <Text style={styles.loadingText}>{t('analyzing')}</Text>
               </View>
             ) : (
               <TouchableOpacity style={styles.analyzeBtn} onPress={analyzeDisease}>
-                <Text style={styles.analyzeBtnText}>Check Health</Text>
+                <Text style={styles.analyzeBtnText}>{t('checkHealth')}</Text>
                 <Ionicons name="sparkles" size={20} color="#FFF" />
               </TouchableOpacity>
             )}
@@ -240,7 +247,7 @@ export default function DiseaseDetectionScreen() {
             {/* Recommendation (Cure/Prev) */}
             {!analysisResult.isHealthy && (
               <View style={styles.tipBox}>
-                <Text style={styles.tipTitle}>Action Required</Text>
+                <Text style={styles.tipTitle}>{t('actionRequired')}</Text>
                 <Text style={styles.tipText}>
                   Isolate plant. Ensure soil is well-drained. If fungal particles are visible, consider organic copper fungicide.
                 </Text>
@@ -250,7 +257,7 @@ export default function DiseaseDetectionScreen() {
             {/* Top Diseases + Similar Images */}
             {analysisResult.topDiseases.length > 0 && (
               <View style={styles.diseaseList}>
-                <Text style={styles.sectionHeader}>Matches</Text>
+                <Text style={styles.sectionHeader}>{t('matches')}</Text>
                 {analysisResult.topDiseases.map((d, i) => (
                   <View key={i} style={styles.diseaseCard}>
                     <View style={styles.diseaseHeader}>
@@ -283,7 +290,7 @@ export default function DiseaseDetectionScreen() {
             {/* Disease Solutions */}
             {diseaseSolutions && (
               <View style={styles.solutionsContainer}>
-                <Text style={styles.sectionHeader}>Analysis & Care Guide</Text>
+                <Text style={styles.sectionHeader}>{t('treatmentPrevention')}</Text>
                 
                 {/* Disease Summary */}
                 <View style={styles.summaryCard}>
@@ -292,7 +299,7 @@ export default function DiseaseDetectionScreen() {
 
                 {/* Solutions */}
                 <View style={styles.solutionsCard}>
-                  <Text style={styles.subHeader}>Care Recommendations:</Text>
+                  <Text style={styles.subHeader}>{t('recommendedSolutions')}</Text>
                   {diseaseSolutions.solutions.map((solution, index) => (
                     <View key={index} style={styles.solutionItem}>
                       <Text style={[styles.bulletPoint, { color: colors.primary }]}>•</Text>
@@ -303,7 +310,7 @@ export default function DiseaseDetectionScreen() {
 
                 {/* Prevention Tips */}
                 <View style={styles.preventionCard}>
-                  <Text style={styles.subHeader}>General Tips:</Text>
+                  <Text style={styles.subHeader}>{t('generalTips')}</Text>
                   {diseaseSolutions.preventionTips.map((tip, index) => (
                     <View key={index} style={styles.solutionItem}>
                       <Text style={[styles.bulletPoint, { color: colors.primary }]}>•</Text>
@@ -340,7 +347,9 @@ export default function DiseaseDetectionScreen() {
                   onPress={async () => {
                     console.log('🧪 Testing Gemini API with disease...');
                     try {
-                      const testSolutions = await GeminiDiseaseService.getDiseaseSolutions('Powdery Mildew', 0.85, false);
+                      const storedGeminiLang = await AsyncStorage.getItem('gemini_language');
+                      const lang = storedGeminiLang === 'ne' ? 'ne' : 'en';
+                      const testSolutions = await GeminiDiseaseService.getDiseaseSolutions('Powdery Mildew', 0.85, false, lang);
                       console.log('✅ Disease test successful:', testSolutions);
                       setDiseaseSolutions(testSolutions);
                       setAnalysisResult({
@@ -366,7 +375,9 @@ export default function DiseaseDetectionScreen() {
                   onPress={async () => {
                     console.log('🧪 Testing Gemini API with healthy plant...');
                     try {
-                      const testSolutions = await GeminiDiseaseService.getDiseaseSolutions('General Plant Health', 0.5, true);
+                      const storedGeminiLang = await AsyncStorage.getItem('gemini_language');
+                      const lang = storedGeminiLang === 'ne' ? 'ne' : 'en';
+                      const testSolutions = await GeminiDiseaseService.getDiseaseSolutions('General Plant Health', 0.5, true, lang);
                       console.log('✅ Healthy test successful:', testSolutions);
                       setDiseaseSolutions(testSolutions);
                       setAnalysisResult({
@@ -517,7 +528,7 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
     borderWidth: 1, borderColor: colors.border
   },
-  summaryText: { fontSize: 20, color: colors.textSecondary, lineHeight: 20 },
+  summaryText: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
   solutionsCard: {
     backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
     borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.success
@@ -526,10 +537,10 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     backgroundColor: colors.card, borderRadius: 16, padding: spacing.m, marginBottom: spacing.m,
     borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.warning
   },
-  subHeader: { fontSize: 23, fontWeight: 'bold', color: colors.text, marginBottom: spacing.s },
+  subHeader: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: spacing.s },
   solutionItem: { flexDirection: 'row', marginBottom: spacing.xs, alignItems: 'flex-start' },
   bulletPoint: { fontSize: 16, color: colors.text, marginRight: spacing.s, marginTop: -2 },
-  solutionText: { fontSize: 20, color: colors.textSecondary, lineHeight: 20, flex: 1 },
+  solutionText: { fontSize: 14, color: colors.textSecondary, lineHeight: 20, flex: 1 },
   loadingSolutions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: spacing.m },
   loadingSolutionsText: { marginLeft: spacing.s, color: colors.textSecondary, fontSize: 14 },
 

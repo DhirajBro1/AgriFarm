@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser, { CropData } from "../../utils/csvParser";
 import { getCurrentNepaliMonth, NEPALI_MONTHS } from "../../utils/farmingData";
+import { t, subscribe } from "../../utils/i18n";
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ export default function CropsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedMonth, setSelectedMonth] = useState(getCurrentNepaliMonth());
   const [region, setRegion] = useState<RegionType>('mid');
+  const [language, setLanguage] = useState('en');
 
   const [searchQuery, setSearchQuery] = useState("");
   const [csvParser] = useState(() => CSVParser.getInstance());
@@ -43,6 +45,8 @@ export default function CropsScreen() {
   useEffect(() => {
     loadUserRegion();
     loadData();
+    const unsub = subscribe((l) => setLanguage(l));
+    return unsub;
   }, [activeTab, selectedMonth, region]);
 
   const loadUserRegion = async () => {
@@ -80,9 +84,9 @@ export default function CropsScreen() {
     if (filteredCrops.length === 0) {
       return (
         <View style={styles.emptyState}>
-          <Ionicons name="leaf-outline" size={48} color={colors.textSecondary} />
-          <Text style={styles.emptyText}>No crops found for this selection.</Text>
-        </View>
+            <Ionicons name="leaf-outline" size={48} color={colors.textSecondary} />
+            <Text style={styles.emptyText}>{t('noCropsFound')}</Text>
+          </View>
       );
     }
 
@@ -214,21 +218,21 @@ export default function CropsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Crops Database</Text>
+        <Text style={styles.headerTitle}>{t('cropsDatabase')}</Text>
       </View>
 
       {/* Fixed Tab Navigation Area - Won't scroll */}
       <View style={styles.navigationContainer}>
         {/* Tab Switcher - Top Priority */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={{ paddingHorizontal: spacing.l }}>
-          {['calendar', 'library', 'fertilizer', 'seeds'].map((t) => (
+          {['calendar', 'library', 'fertilizer', 'seeds'].map((k) => (
             <TouchableOpacity
-              key={t}
-              style={[styles.tab, activeTab === t && { backgroundColor: colors.text }]}
-              onPress={() => { setActiveTab(t as TabType); setSearchQuery(""); }}
+              key={k}
+              style={[styles.tab, activeTab === k && { backgroundColor: colors.text }]}
+              onPress={() => { setActiveTab(k as TabType); setSearchQuery(""); }}
             >
-              <Text style={[styles.tabText, activeTab === t && styles.tabTextActive]}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+              <Text style={[styles.tabText, activeTab === k && styles.tabTextActive]}>
+                {t(k)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -240,7 +244,7 @@ export default function CropsScreen() {
             <Ionicons name="search" size={20} color={colors.textSecondary} />
             <TextInput
               style={styles.searchInput}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={t('searchPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={searchQuery}
               onChangeText={handleSearch}

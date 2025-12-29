@@ -4,7 +4,8 @@
  */
 
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { t, subscribe } from "../../utils/i18n";
 import {
   Keyboard,
   Modal,
@@ -50,6 +51,12 @@ export default function ToolsScreen() {
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
 
   const [activeTool, setActiveTool] = useState('yield');
+  const [language, setLanguage] = useState('en');
+
+  useEffect(() => {
+    const unsub = subscribe((l) => setLanguage(l));
+    return unsub;
+  }, []);
 
   // Yield Calc State
   const [landArea, setLandArea] = useState("");
@@ -124,11 +131,11 @@ export default function ToolsScreen() {
   const renderToolContent = () => {
     if (activeTool === 'yield') {
       return (
-        <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>Crop Yield Estimator</Text>
-          <Text style={styles.toolDesc}>Estimate your harvest based on land size and crop type.</Text>
+          <View style={styles.toolContainer}>
+            <Text style={styles.toolTitle}>{t('cropYieldEstimator')}</Text>
+            <Text style={styles.toolDesc}>{t('estimateYourHarvest')}</Text>
 
-          <Text style={styles.inputLabel}>Crop Type</Text>
+          <Text style={styles.inputLabel}>{t('cropType')}</Text>
           <TouchableOpacity style={styles.selectorBtn} onPress={() => setModalVisible(true)}>
             <Text style={[styles.selectorText, selectedCrop === "Select Crop" && styles.placeholderText]}>
               {selectedCrop}
@@ -136,7 +143,7 @@ export default function ToolsScreen() {
             <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <Text style={styles.inputLabel}>Land Area (Ropani)</Text>
+          <Text style={styles.inputLabel}>{t('landArea')}</Text>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -150,7 +157,7 @@ export default function ToolsScreen() {
           </View>
 
           <TouchableOpacity style={styles.actionBtn} onPress={calculateYield}>
-            <Text style={styles.actionBtnText}>Calculate Output</Text>
+            <Text style={styles.actionBtnText}>{t('calculateOutput')}</Text>
           </TouchableOpacity>
 
           {calculatedYield && (

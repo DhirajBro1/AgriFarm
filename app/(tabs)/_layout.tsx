@@ -1,16 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { t, subscribe } from '../../utils/i18n';
 import { Platform } from 'react-native';
+import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 
 export default function TabLayout() {
     const { colors, typography, spacing } = useTheme();
     const insets = useSafeAreaInsets();
+    const [language, setLanguage] = useState('en');
+
+    useEffect(() => {
+        const unsub = subscribe((l) => setLanguage(l));
+        return unsub;
+    }, []);
 
     return (
         <Tabs
+            key={language}
             screenOptions={{
                 headerShown: false,
                 tabBarStyle: {
@@ -34,7 +43,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Home',
+                    tabBarLabel: ({ color, focused }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '600' }}>{t('home')}</Text>
+                    ),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
                     ),
@@ -43,7 +54,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="crops"
                 options={{
-                    title: 'Crops',
+                    tabBarLabel: ({ color, focused }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '600' }}>{t('crops')}</Text>
+                    ),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'leaf' : 'leaf-outline'} size={24} color={color} />
                     ),
@@ -52,7 +65,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="tools"
                 options={{
-                    title: 'Tools',
+                    tabBarLabel: ({ color, focused }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '600' }}>{t('tools')}</Text>
+                    ),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'construct' : 'construct-outline'} size={24} color={color} />
                     ),
@@ -61,7 +76,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="tips"
                 options={{
-                    title: 'Tips',
+                    tabBarLabel: ({ color, focused }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '600' }}>{t('tips')}</Text>
+                    ),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'bulb' : 'bulb-outline'} size={24} color={color} />
                     ),
@@ -70,7 +87,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="account"
                 options={{
-                    title: 'Account',
+                    tabBarLabel: ({ color, focused }) => (
+                        <Text style={{ color, fontSize: 12, fontWeight: '600' }}>{t('account')}</Text>
+                    ),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
                     ),
