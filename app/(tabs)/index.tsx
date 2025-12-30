@@ -20,12 +20,21 @@ import {
   TextInput,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser, { CropData } from "../../utils/csvParser";
 import { getCurrentNepaliMonth, getGreeting, REGIONS, RegionType } from "../../utils/farmingData";
+import { PanGestureHandler, PanGestureHandlerGestureEvent, PanGestureHandlerStateChangeEvent, State } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from "react-native-reanimated";
 
 
 export default function HomeScreen() {
@@ -43,6 +52,12 @@ export default function HomeScreen() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{id: string, text: string, isUser: boolean, timestamp: Date}>>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState<{
+    title: string;
+    recommendations: string[];
+    tips: string[];
+  } | null>(null);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const currentMonth = useMemo(() => getCurrentNepaliMonth(), []);
 
   // Onboarding Modal State
@@ -53,8 +68,11 @@ export default function HomeScreen() {
   useEffect(() => {
     checkFirstTime();
     loadData();
-    const unsub = subscribe((l) => setLanguage(l));
-    return unsub;
+    loadRecommendations();
+    const unsubscribe = subscribe((l) => setLanguage(l));
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const checkFirstTime = async () => {
@@ -104,12 +122,51 @@ export default function HomeScreen() {
     setSeasonalCrops(unique);
   };
 
+  const loadRecommendations = async () => {
+    setRecommendationsLoading(true);
+    try {
+      const region = (await AsyncStorage.getItem("region")) as 'high' | 'mid' | 'terai' || 'mid';
+      const storedGeminiLang = await AsyncStorage.getItem('gemini_language');
+      const lang = storedGeminiLang === 'ne' ? 'ne' : 'en';
+
+      // Map region codes to readable names
+      const regionNames = {
+        high: 'High Hills',
+        mid: 'Mid Hills',
+        terai: 'Terai'
+      };
+
+      const regionName = regionNames[region] || 'Mid Hills';
+
+      console.log('🏠 Loading recommendations for region:', regionName, 'month:', currentMonth, 'language:', lang);
+      const recs = await GeminiDiseaseService.getHomeRecommendations(regionName, currentMonth, lang);
+      setRecommendations(recs);
+    } catch (error) {
+      console.error('❌ Failed to load recommendations:', error);
+      // Keep existing recommendations or set fallback
+      if (!recommendations) {
+        setRecommendations({
+          title: language === 'ne' ? 'कृषि सिफारिसहरू' : 'Farming Recommendations',
+          recommendations: [
+            language === 'ne' ? 'मौसम अनुसार बाली लगाउनुहोस्' : 'Plant crops according to season',
+            language === 'ne' ? 'माटो परीक्षण गर्नुहोस्' : 'Test your soil regularly'
+          ],
+          tips: [
+            language === 'ne' ? 'कृषि विशेषज्ञसँग सल्लाह लिनुहोस्' : 'Consult agricultural experts'
+          ]
+        });
+      }
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadData();
+      await Promise.all([loadData(), loadRecommendations()]);
     } catch (e) {
-      // ignore - loadData handles errors where appropriate
+      // ignore - individual functions handle errors where appropriate
     } finally {
       setRefreshing(false);
     }
@@ -171,6 +228,90 @@ export default function HomeScreen() {
     { id: "tools", title: t('tools'), subtitle: t('tools'), icon: "construct", color: "#3B82F6", route: "/tools" },
     { id: "tips", title: t('tips'), subtitle: t('tips'), icon: "bulb", color: "#F59E0B", route: "/tips" },
   ];
+
+  // Function to get crop icon images (using local assets)
+  const getCropIcon = (cropName: string) => {
+    const name = cropName.toLowerCase();
+
+    // Use local crop images
+    if (name.includes('wheat')) return require('../../assets/images/crops/wheat.png');
+    if (name.includes('rice')) return require('../../assets/images/crops/rice.png');
+    if (name.includes('corn') || name.includes('maize')) return require('../../assets/images/crops/corn.png');
+    if (name.includes('potato')) return require('../../assets/images/crops/potato.png');
+    if (name.includes('tomato')) return require('../../assets/images/crops/tomato.png');
+    if (name.includes('cabbage')) return require('../../assets/images/crops/cabbage.png');
+    if (name.includes('cauliflower')) return require('../../assets/images/crops/cauliflower.jpeg');
+    if (name.includes('onion')) return require('../../assets/images/crops/onion.png');
+    if (name.includes('lentil') || name.includes('dal')) return require('../../assets/images/crops/lentil.png');
+    if (name.includes('mustard')) return require('../../assets/images/crops/mustard.png');
+
+    // Default fallback (use wheat as default crop icon)
+    return require('../../assets/images/crops/wheat.png');
+  };
+
+  // Animated values for draggable FAB - track absolute position
+  const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+  const fabSize = 64;
+
+  // Initial position (bottom right)
+  const initialX = screenWidth - fabSize - 20;
+  const initialY = screenHeight - 120;
+
+  const fabX = useSharedValue(initialX);
+  const fabY = useSharedValue(initialY);
+  const startX = useSharedValue(initialX);
+  const startY = useSharedValue(initialY);
+
+  const onGestureEvent = (event: PanGestureHandlerGestureEvent) => {
+    'worklet';
+    fabX.value = startX.value + event.nativeEvent.translationX;
+    fabY.value = startY.value + event.nativeEvent.translationY;
+  };
+
+  const onHandlerStateChange = (event: PanGestureHandlerStateChangeEvent) => {
+    'worklet';
+    if (event.nativeEvent.state === State.BEGAN) {
+      // Store the current position when gesture starts
+      startX.value = fabX.value;
+      startY.value = fabY.value;
+    } else if (event.nativeEvent.state === State.END) {
+      // Snap to edges
+      if (fabX.value + fabSize / 2 < screenWidth / 2) {
+        // Snap to left
+        fabX.value = withSpring(20);
+      } else {
+        // Snap to right
+        fabX.value = withSpring(screenWidth - fabSize - 20);
+      }
+
+      // Keep within vertical bounds
+      const minY = insets.top + 100;
+      const maxY = screenHeight - 120;
+
+      if (fabY.value < minY) {
+        fabY.value = withSpring(minY);
+      } else if (fabY.value > maxY) {
+        fabY.value = withSpring(maxY);
+      }
+    }
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    left: fabX.value,
+    top: fabY.value,
+  }));
+
+  // Dynamic text card positioning based on FAB position
+  const textCardStyle = useAnimatedStyle(() => {
+    const isOnLeftSide = fabX.value < screenWidth / 2;
+    return {
+      left: isOnLeftSide ? 64 : undefined, // Right of icon when on left
+      right: isOnLeftSide ? undefined : -80, // Left of icon when on right (negative to go beyond icon bounds)
+      top: '50%',
+      transform: [{ translateY: -12 }],
+    };
+  });
 
   return (
     <View style={styles.container}>
@@ -268,26 +409,114 @@ export default function HomeScreen() {
           )}
         </TouchableOpacity>
 
+        {/* Recommended Crops Section */}
+        {recommendations && (
+          <View style={styles.cropsSection}>
+            <View style={styles.cropsHeader}>
+              <Ionicons name="leaf" size={24} color="#10B981" />
+              <Text style={styles.cropsTitle}>Recommended Crops for {currentMonth}</Text>
+            </View>
+
+            <View style={styles.cropsGrid}>
+              {recommendations.recommendations.map((rec, index) => {
+                // Extract and clean crop name from the recommendation text
+                let cropName = rec.split(' - ')[0] || rec.split(': ')[0] || rec;
+                // Remove ** symbols and clean up the text
+                cropName = cropName.replace(/\*\*/g, '').replace(/\*/g, '').trim();
+                // Extract just the main crop name (remove parentheses content if present)
+                const mainCropName = cropName.split('(')[0].trim();
+
+                const reason = rec.split(' - ')[1] || rec.split(': ')[1] || 'Great choice for this season';
+
+                return (
+                  <View key={index} style={styles.cropCard}>
+                    <View style={styles.cropIcon}>
+                      <Image
+                        source={getCropIcon(mainCropName)}
+                        style={styles.cropIconImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Text style={styles.cropName}>{mainCropName}</Text>
+                    <Text style={styles.cropReason}>{reason}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* AI Tips Section */}
+        {recommendations && (
+          <View style={styles.tipsCard}>
+            <View style={styles.tipsHeader}>
+              <View style={styles.tipsBadge}>
+                <Ionicons name="bulb" size={16} color="#F59E0B" />
+                <Text style={styles.tipsBadgeText}>Smart Tips</Text>
+              </View>
+            </View>
+
+            <View style={styles.tipsContent}>
+              {recommendations.tips.map((tip, index) => (
+                <View key={index} style={styles.tipItem}>
+                  <View style={styles.tipBullet}>
+                    <Text style={styles.tipBulletText}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.tipText}>{tip}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {recommendationsLoading && (
+          <View style={styles.recommendationsCard}>
+            <View style={styles.recommendationsHeader}>
+              <View style={styles.recommendationsBadge}>
+                <Ionicons name="sparkles" size={14} color="#F59E0B" />
+                <Text style={styles.recommendationsBadgeText}>AI Insights</Text>
+              </View>
+              <Text style={styles.recommendationsTitle}>Loading AI Recommendations...</Text>
+            </View>
+            <View style={styles.loadingIndicator}>
+              <View style={styles.loadingDot} />
+              <View style={[styles.loadingDot, styles.loadingDotDelay]} />
+              <View style={[styles.loadingDot, styles.loadingDotDelay2]} />
+            </View>
+          </View>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Floating AgriBot Button */}
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={openChat}
-        style={styles.fab}
+      <PanGestureHandler
+        onGestureEvent={onGestureEvent}
+        onHandlerStateChange={onHandlerStateChange}
       >
-        <View style={styles.fabInner}>
-          <Image source={require('../../assets/images/agribot.png')} style={styles.fabImage} />
-        </View>
-        <View style={styles.fabLabel}>
-          <Text style={styles.fabLabelText}>AgriBot</Text>
-        </View>
-      </TouchableOpacity>
+        <Animated.View style={[styles.fab, animatedStyle]}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={openChat}
+            style={{ flex: 1 }}
+          >
+            <View style={styles.fabInner}>
+              <Image source={require('../../assets/images/agribot.png')} style={styles.fabImage} />
+            </View>
+            <View style={styles.fabLabel}>
+              <Text style={styles.fabLabelText}>AgriBot</Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </PanGestureHandler>
 
       {/* AgriBot Chat Modal */}
       <Modal visible={chatVisible} animationType="slide" transparent>
-        <View style={styles.chatOverlay}>
+        <KeyboardAvoidingView
+          style={styles.chatOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
           <View style={styles.chatPanel}>
             {/* Chat Header */}
             <View style={styles.chatHeader}>
@@ -392,7 +621,7 @@ export default function HomeScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Onboarding Modal */}
@@ -470,16 +699,14 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   },
   fab: {
     position: 'absolute',
-    bottom: 28,
-    right: 20,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
   },
 
   fabInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 999,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#2ecc71',
     borderWidth: 2,
     borderColor: '#1f7a36',
@@ -498,13 +725,13 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   },
 
   fabImage: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     resizeMode: 'contain',
   },
 
   fabLabel: {
-    marginLeft: 10,
+    marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
 
@@ -1037,5 +1264,217 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     color: '#FFF',
     fontSize: typography.sizes.large,
     fontWeight: 'bold',
+  },
+
+  // AI Recommendations Styles
+  recommendationsCard: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.l,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.m,
+  },
+  recommendationsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  recommendationsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: spacing.m,
+  },
+  recommendationsBadgeText: {
+    color: '#F59E0B',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  recommendationsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    flex: 1,
+  },
+  recommendationsContent: {},
+  recommendationsSectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: spacing.s,
+    marginTop: spacing.s,
+  },
+  recommendationItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.s,
+  },
+  recommendationBullet: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+    marginTop: 2,
+  },
+  recommendationBulletText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  tipIcon: {
+    marginRight: spacing.s,
+    marginTop: 2,
+  },
+  recommendationText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+    flex: 1,
+  },
+  loadingIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.l,
+  },
+  loadingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginHorizontal: 4,
+    opacity: 0.6,
+  },
+  loadingDotDelay: {
+    animationDelay: '0.2s',
+  },
+  loadingDotDelay2: {
+    animationDelay: '0.4s',
+  },
+
+  // Recommended Crops Section Styles
+  cropsSection: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.l,
+    marginBottom: spacing.m,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cropsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  cropsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginLeft: spacing.m,
+    flex: 1,
+  },
+  cropsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  cropCard: {
+    width: '48%',
+    backgroundColor: colors.cardMuted,
+    borderRadius: 16,
+    padding: spacing.m,
+    marginBottom: spacing.m,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cropIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#DCFCE7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  cropIconImage: {
+    width: 32,
+    height: 32,
+  },
+  cropName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  cropReason: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+
+  // Tips Section Styles
+  tipsCard: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.l,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.m,
+  },
+  tipsHeader: {
+    marginBottom: spacing.m,
+  },
+  tipsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  tipsBadgeText: {
+    color: '#F59E0B',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  tipsContent: {},
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.s,
+  },
+  tipBullet: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F59E0B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+    marginTop: 2,
+  },
+  tipBulletText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  tipText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+    flex: 1,
   },
 });

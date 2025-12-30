@@ -91,8 +91,8 @@ const translations: Record<Lang, Record<string, string>> = {
     aboutText: 'AgriFarm लाई Radhika Secondary School को IT समूहले विकास गरेको हो जसले नेपाली किसानहरुलाई उनीहरुको प्रदेश र हालको नेपाली महिनाको आधारमा बाली योजना बनाउन मद्दत गर्छ।',
     version: 'संस्करण',
 
-    scanPlant: 'बिरुवा स्क्यान गर्नुहोस्',
-    tapToScan: 'पात स्क्यान गर्न थिच्नुहोस्',
+    scanPlant: 'बिरुवा जाँच गर्नुहोस्',
+    tapToScan: 'पात जाँच गर्न थिच्नुहोस्',
     howItWorks: 'यो कसरी काम गर्छ',
     howItWorksText: '• प्रभावित बिरुवाको भागको स्पष्ट फोटो लिनुहोस्\n• PlantNet AI ले रोगको विश्लेषण गर्छ\n• मिल्दोजुल्दो केसहरूका विस्तृत नतिजाहरू प्राप्त गर्नुहोस्',
     uploadFromGallery: 'वा ग्यालरीबाट अपलोड गर्नुहोस्',
