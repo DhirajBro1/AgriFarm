@@ -62,6 +62,11 @@ interface HealthAssessment {
   healthProbability: number;
   isPlant: boolean;
   plantProbability: number;
+  identifiedPlant?: {
+    commonName: string;
+    scientificName: string;
+    probability: number;
+  };
   topDiseases: {
     name: string;
     probability: number;
@@ -76,6 +81,7 @@ interface HealthAssessment {
 
 class PlantNetDiseaseService {
   private static readonly API_URL = "https://my-api.plantnet.org/v2/diseases";
+  private static readonly PLANT_API_URL = "https://my-api.plantnet.org/v2/identify/all";
   private static readonly API_KEY = process.env.EXPO_PUBLIC_PLANTNET_API_KEY;
 
   /**
@@ -277,6 +283,77 @@ class PlantNetDiseaseService {
       throw new Error("Failed to identify disease. Please try again.");
     }
   }
+  /**
+   * Identifies plant species from images using PlantNet API
+   * @param request - Object containing images and options
+   * @returns Promise<any> - The plant identification results
+   */
+  static async identifyPlant(
+    request: PlantNetDiseaseRequest,
+  ): Promise<any> {
+    if (!this.API_KEY) {
+      throw new Error("PlantNet API key not configured.");
+    }
+
+    try {
+      const formData = new FormData();
+      for (let i = 0; i < request.images.length; i++) {
+        formData.append("images", {
+          uri: request.images[i].uri,
+          type: "image/jpeg",
+          name: `image_${i}.jpg`,
+        } as any);
+        formData.append("organs", request.images[i].organ || "auto");
+      }
+
+      const url = `${this.PLANT_API_URL}?api-key=${this.API_KEY}&include-related-images=false`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Plant identification failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("PlantNet Identification error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Identifies plant from base64 string
+   */
+  static async identifyPlantFromBase64(
+    base64Images: string[]
+  ): Promise<any> {
+    const tempImages: { uri: string; organ?: string }[] = [];
+    try {
+      for (let i = 0; i < base64Images.length; i++) {
+        const cleanBase64 = base64Images[i].replace(/^data:image\/[a-z]+;base64,/, "");
+        const tempUri = `${FileSystem.documentDirectory}temp_plant_${i}_${Date.now()}.jpg`;
+        await FileSystem.writeAsStringAsync(tempUri, cleanBase64, { encoding: "base64" as any });
+        tempImages.push({ uri: tempUri });
+      }
+
+      const result = await this.identifyPlant({ images: tempImages });
+
+      for (const tempImage of tempImages) {
+        await FileSystem.deleteAsync(tempImage.uri, { idempotent: true });
+      }
+
+      return result;
+    } catch (error) {
+      for (const tempImage of tempImages) {
+        await FileSystem.deleteAsync(tempImage.uri, { idempotent: true });
+      }
+      throw error;
+    }
+  }
+
 
   /**
    * Identifies diseases from base64 image data
@@ -383,7 +460,7 @@ class PlantNetDiseaseService {
     const isHealthy = !hasSignificantDisease;
     const healthProbability = isHealthy
       ? 1.0 -
-        (formattedResults.length > 0 ? formattedResults[0].confidence / 100 : 0)
+      (formattedResults.length > 0 ? formattedResults[0].confidence / 100 : 0)
       : formattedResults.length > 0
         ? 1.0 - formattedResults[0].confidence / 100
         : 0.5;
@@ -437,11 +514,11 @@ class PlantNetDiseaseService {
     const averageConfidence =
       formattedResults.length > 0
         ? Math.round(
-            formattedResults.reduce(
-              (sum, result) => sum + result.confidence,
-              0,
-            ) / formattedResults.length,
-          )
+          formattedResults.reduce(
+            (sum, result) => sum + result.confidence,
+            0,
+          ) / formattedResults.length,
+        )
         : 0;
 
     const hasSignificantDisease = formattedResults.some(
@@ -479,9 +556,8 @@ class PlantNetDiseaseService {
 
 export default PlantNetDiseaseService;
 export type {
-  PlantNetDiseaseResponse,
-  PlantNetDiseaseResult,
-  PlantNetDiseaseRequest,
   FormattedDiseaseResult,
-  HealthAssessment,
+  HealthAssessment, PlantNetDiseaseRequest, PlantNetDiseaseResponse,
+  PlantNetDiseaseResult
 };
+

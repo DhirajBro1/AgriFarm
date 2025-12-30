@@ -1,0 +1,277 @@
+{
+    "account": {
+        "title": "Account",
+        "profile": {
+            "editProfile": "Edit Profile",
+            "displayName": "Display Name",
+            "selectRegion": "Select Region",
+            "saveChanges": "Save Changes",
+            "cancel": "Cancel",
+            "namePlaceholder": "Farmer Name",
+            "nameEmpty": "Name cannot be empty",
+            "updateSuccess": "Your profile has been updated!",
+            "updateError": "Failed to save changes. Please try again.",
+            "regionNotSet": "Region Not Set"
+        },
+        "preferences": {
+            "title": "Preferences",
+            "darkMode": "Dark Mode",
+            "darkModeDesc": "Toggle app theme",
+            "notifications": "Notifications",
+            "notificationsDesc": "Manage alerts",
+            "language": "Language",
+            "languageDesc": "English / Nepali"
+        },
+        "about": {
+            "title": "About",
+            "description": "AgriFarm is developed by IT group of Radhika Secondary School which helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized recommendations.",
+            "version": "Version 1.0.2"
+        }
+    },
+    "regions": {
+        "terai": {
+            "label": "Terai",
+            "description": "Subtropical lowlands"
+        },
+        "mid": {
+            "label": "Mid Hills",
+            "description": "Temperate mid-altitude"
+        },
+        "high": {
+            "label": "High Mountains",
+            "description": "Cold high-altitude"
+        }
+    },
+    "navigation": {
+        "home": "Home",
+        "crops": "Crops",
+        "tools": "Tools",
+        "tips": "Tips",
+        "account": "Account",
+        "agribot": "AgriBot"
+    },
+    "home": {
+        "greeting": {
+            "morning": "Good Morning",
+            "afternoon": "Good Afternoon",
+            "evening": "Good Evening"
+        },
+        "hero": {
+            "badge": "AI POWERED",
+            "title": "Check Plant Health",
+            "subtitle": "Take a photo to detect diseases instantly."
+        },
+        "sections": {
+            "essentials": "Essentials"
+        },
+        "features": {
+            "crops": {
+                "title": "Crops",
+                "subtitle": "Library & Calendar"
+            },
+            "tools": {
+                "title": "Tools",
+                "subtitle": "Calculators"
+            },
+            "tips": {
+                "title": "Tips",
+                "subtitle": "Farming Guides"
+            }
+        },
+        "seasonal": {
+            "title": "Best for {{month}}",
+            "subtitle": "Recommended planting now",
+            "more": "+ more",
+            "checkCalendar": "Check the full calendar for details."
+        },
+        "onboarding": {
+            "title": "Welcome to AgriFarm!",
+            "subtitle": "Your Smart Farming Companion",
+            "nameLabel": "What's your name?",
+            "namePlaceholder": "e.g., Aman Sharma",
+            "selectLanguage": "Select Language",
+            "selectTheme": "Select Theme",
+            "regionLabel": "Select your region",
+            "regionHelper": "This helps us provide better recommendations",
+            "getStarted": "Get Started",
+            "nameRequired": "Name Required",
+            "nameRequiredMessage": "Please enter your name to continue.",
+            "error": "Error",
+            "errorMessage": "Failed to save your information."
+        }
+    },
+    "crops": {
+        "title": "Crops Database",
+        "tabs": {
+            "calendar": "Calendar",
+            "library": "Library",
+            "fertilizer": "Fertilizer",
+            "seeds": "Seeds"
+        },
+        "search": {
+            "placeholder": "Search {{tab}}..."
+        },
+        "calendar": {
+            "helper": "Showing crops to plant in:"
+        },
+        "empty": "No crops found for this selection.",
+        "details": {
+            "maturity": "Maturity",
+            "yield": "Yield",
+            "seedRate": "Seed Rate",
+            "soilPH": "Soil pH",
+            "plantSpacing": "Plant Spacing",
+            "rowSpacing": "Row Spacing",
+            "days": "Days",
+            "kgPerRopani": "Kg/R",
+            "cm": "cm"
+        },
+        "sowing": {
+            "label": "Sowing ({{region}}):",
+            "periods": "Sowing Periods",
+            "highHills": "High Hills",
+            "midHills": "Mid Hills",
+            "terai": "Terai"
+        },
+        "fertilizer": {
+            "title": "Nutrient Requirements (kg/ha)",
+            "nitrogen": "Nitrogen",
+            "phosphorus": "Phosphorus",
+            "potassium": "Potassium",
+            "compost": "Compost",
+            "note": "Note:"
+        },
+        "seeds": {
+            "recommended": "Recommended:"
+        }
+    },
+    "diseaseDetection": {
+        "title": "Scan Plant",
+        "tapToScan": "Tap to Scan Leaf",
+        "uploadGallery": "or upload from gallery",
+        "checkHealth": "Check Health",
+        "analyzing": "Analyzing plant...",
+        "gettingRecommendations": "Getting analysis and care recommendations...",
+        "howItWorks": {
+            "title": "How it works",
+            "step1": "Take a clear photo of the affected plant part",
+            "step2": "PlantNet AI analyzes the image for diseases",
+            "step3": "Get detailed results with similar cases"
+        },
+        "plantConfidence": "Plant Confidence",
+        "identifiedPlant": "Identified Plant",
+        "scientificName": "Scientific Name",
+        "healthStatus": {
+            "healthy": "Healthy Plant",
+            "diseased": "Disease Detected",
+            "certainty": "Certainty"
+        },
+        "actionRequired": "Action Required",
+        "actionText": "Isolate plant. Ensure soil is well-drained. If fungal particles are visible, consider organic copper fungicide.",
+        "matches": "Matches",
+        "similarImages": "Similar Reference Images:",
+        "analysisGuide": "Analysis & Care Guide",
+        "careRecommendations": "Care Recommendations:",
+        "generalTips": "General Tips:",
+        "errors": {
+            "takePicture": "Failed to take picture.",
+            "pickImage": "Failed to pick image.",
+            "analysis": "Failed to analyze."
+        }
+    },
+    "tips": {
+        "title": "Farming Tips",
+        "categories": {
+            "all": "All",
+            "watering": "Watering",
+            "fertilizer": "Fertilizer",
+            "planting": "Planting",
+            "harvesting": "Harvesting"
+        },
+        "bestFor": "Best for:"
+    },
+    "tools": {
+        "title": "Tools",
+        "toolNames": {
+            "yield": "Yield Calculator",
+            "area": "Area Converter",
+            "unit": "Weight Converter"
+        },
+        "yieldCalculator": {
+            "title": "Yield Calculator",
+            "subtitle": "Estimate potential crop yield",
+            "area": "Area (Ropani)",
+            "seedRate": "Seed Rate (kg/Ropani)",
+            "calculate": "Calculate Yield",
+            "result": "Estimated Yield",
+            "unit": "metric tons"
+        },
+        "areaConverter": {
+            "title": "Area Converter",
+            "subtitle": "Convert between units",
+            "enterValue": "Enter Value",
+            "from": "From",
+            "to": "To",
+            "convert": "Convert",
+            "result": "Result",
+            "units": {
+                "ropani": "Ropani",
+                "aana": "Aana",
+                "bigha": "Bigha",
+                "hectare": "Hectare",
+                "sqMeter": "Square Meter"
+            }
+        },
+        "weightConverter": {
+            "title": "Weight Converter",
+            "subtitle": "Convert weight units",
+            "enterWeight": "Enter Weight",
+            "from": "From",
+            "to": "To",
+            "convert": "Convert",
+            "result": "Result",
+            "units": {
+                "kg": "Kilogram",
+                "quintal": "Quintal",
+                "ton": "Ton (Metric)",
+                "muri": "Muri",
+                "pathi": "Pathi"
+            }
+        }
+    },
+    "common": {
+        "error": "Error",
+        "success": "Success",
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "confirm": "Confirm",
+        "close": "Close",
+        "select": "Select",
+        "selectCrop": "Select Crop",
+        "from": "From",
+        "to": "To"
+    },
+    "agribot": {
+        "title": "AgriBot AI",
+        "welcome": "Hello! I'm AgriBot. How can I help you with your farming today?",
+        "inputPlaceholder": "Ask anything about farming...",
+        "typing": "AgriBot is typing..."
+    },
+    "months": {
+        "baisakh": "Baisakh",
+        "jestha": "Jestha",
+        "ashar": "Ashar",
+        "shrawan": "Shrawan",
+        "bhadra": "Bhadra",
+        "ashwin": "Ashwin",
+        "kartik": "Kartik",
+        "mangsir": "Mangsir",
+        "poush": "Poush",
+        "magh": "Magh",
+        "falgun": "Falgun",
+        "chaitra": "Chaitra"
+    }
+}

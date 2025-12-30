@@ -7,9 +7,11 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,11 +23,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser, { CropData } from "../../utils/csvParser";
-import { getCurrentNepaliMonth, getGreeting, REGIONS, RegionType } from "../../utils/farmingData";
+import { getCurrentNepaliMonth, REGIONS, RegionType } from "../../utils/farmingData";
+
 
 export default function HomeScreen() {
-  const { colors, typography, spacing } = useTheme();
+  const { colors, typography, spacing, theme, setTheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
@@ -38,6 +42,7 @@ export default function HomeScreen() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingName, setOnboardingName] = useState("");
   const [onboardingRegion, setOnboardingRegion] = useState<RegionType>("mid");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     checkFirstTime();
@@ -53,7 +58,7 @@ export default function HomeScreen() {
 
   const handleOnboardingComplete = async () => {
     if (!onboardingName.trim()) {
-      Alert.alert("Name Required", "Please enter your name to continue.");
+      Alert.alert(t('home.onboarding.nameRequired'), t('home.onboarding.nameRequiredMessage'));
       return;
     }
 
@@ -68,7 +73,7 @@ export default function HomeScreen() {
       // Reload data with new region
       loadData();
     } catch (error) {
-      Alert.alert("Error", "Failed to save your information.");
+      Alert.alert(t('home.onboarding.error'), t('home.onboarding.errorMessage'));
     }
   };
 
@@ -91,27 +96,33 @@ export default function HomeScreen() {
     setSeasonalCrops(unique);
   };
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, []);
+
   const features = [
     {
       id: "crops",
-      title: "Crops",
-      subtitle: "Library & Calendar",
+      title: t('home.features.crops.title'),
+      subtitle: t('home.features.crops.subtitle'),
       icon: "leaf",
       color: "#10B981",
       route: "/crops",
     },
     {
       id: "tools",
-      title: "Tools",
-      subtitle: "Calculators",
+      title: t('home.features.tools.title'),
+      subtitle: t('home.features.tools.subtitle'),
       icon: "construct",
       color: "#3B82F6",
       route: "/tools",
     },
     {
       id: "tips",
-      title: "Tips",
-      subtitle: "Farming Guides",
+      title: t('home.features.tips.title'),
+      subtitle: t('home.features.tips.subtitle'),
       icon: "bulb",
       color: "#F59E0B",
       route: "/tips",
@@ -123,7 +134,7 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>{getGreeting()},</Text>
+          <Text style={styles.greeting}>{t(`home.greeting.${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}`)},</Text>
           <Text style={styles.username}>{username}</Text>
         </View>
         <Link href="/account" asChild>
@@ -135,7 +146,18 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
 
         {/* Hero: AI Scanner */}
         <TouchableOpacity
@@ -146,18 +168,18 @@ export default function HomeScreen() {
           <View style={styles.scanContent}>
             <View style={styles.scanBadge}>
               <Ionicons name="sparkles" size={12} color="#FBBF24" />
-              <Text style={styles.scanBadgeText}>AI POWERED</Text>
+              <Text style={styles.scanBadgeText}>{t('home.hero.badge')}</Text>
             </View>
-            <Text style={[styles.scanTitle, { color: '#FFF' }]}>Check Plant Health</Text>
+            <Text style={[styles.scanTitle, { color: '#FFF' }]}>{t('home.hero.title')}</Text>
             <Text style={[styles.scanSubtitle, { color: 'rgba(255,255,255,0.9)' }]}>
-              Take a photo to detect diseases instantly.
+              {t('home.hero.subtitle')}
             </Text>
           </View>
           <Ionicons name="scan-circle" size={64} color="#FFF" />
         </TouchableOpacity>
 
         {/* Feature Grid */}
-        <Text style={styles.sectionTitle}>Essentials</Text>
+        <Text style={styles.sectionTitle}>{t('home.sections.essentials')}</Text>
         <View style={styles.grid}>
           {features.map((item) => (
             <TouchableOpacity
@@ -182,8 +204,8 @@ export default function HomeScreen() {
         >
           <View style={styles.widgetHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.widgetTitle}>Best for {currentMonth}</Text>
-              <Text style={styles.widgetSub}>Recommended planting now</Text>
+              <Text style={styles.widgetTitle}>{t('home.seasonal.title', { month: t(`months.${currentMonth.toLowerCase()}`) })}</Text>
+              <Text style={styles.widgetSub}>{t('home.seasonal.subtitle')}</Text>
             </View>
             <Ionicons name="calendar-outline" size={24} color="#F59E0B" />
           </View>
@@ -196,11 +218,11 @@ export default function HomeScreen() {
                   <Text style={styles.cropTagText}>{crop.crop}</Text>
                 </View>
               ))}
-              <Text style={styles.moreText}>+ more</Text>
+              <Text style={styles.moreText}>{t('home.seasonal.more')}</Text>
             </View>
           ) : (
             <Text style={{ color: colors.textSecondary, marginTop: 8 }}>
-              Check the full calendar for details.
+              {t('home.seasonal.checkCalendar')}
             </Text>
           )}
         </TouchableOpacity>
@@ -218,24 +240,76 @@ export default function HomeScreen() {
               <View style={styles.onboardingIconCircle}>
                 <Ionicons name="leaf" size={48} color="#FFF" />
               </View>
-              <Text style={styles.onboardingTitle}>Welcome to AgriFarm!</Text>
-              <Text style={styles.onboardingSubtitle}>Your Smart Farming Companion</Text>
+              <Text style={styles.onboardingTitle}>{t('home.onboarding.title')}</Text>
+              <Text style={styles.onboardingSubtitle}>{t('home.onboarding.subtitle')}</Text>
             </View>
 
             {/* Form */}
             <View style={styles.onboardingForm}>
-              <Text style={styles.formLabel}>What's your name?</Text>
+              <Text style={styles.formLabel}>{t('home.onboarding.nameLabel')}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="e.g., Aman"
+                placeholder={t('home.onboarding.namePlaceholder')}
                 placeholderTextColor={colors.textSecondary}
                 value={onboardingName}
                 onChangeText={setOnboardingName}
                 autoFocus
               />
 
-              <Text style={[styles.formLabel, { marginTop: spacing.l }]}>Select your region</Text>
-              <Text style={styles.formHelper}>This helps us provide better recommendations</Text>
+              {/* Language Selection */}
+              <Text style={[styles.formLabel, { marginTop: spacing.l }]}>{t('home.onboarding.selectLanguage')}</Text>
+              <View style={{ flexDirection: 'row', gap: spacing.m }}>
+                {['en', 'ne'].map((lang) => (
+                  <TouchableOpacity
+                    key={lang}
+                    style={[
+                      styles.regionCard,
+                      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.m },
+                      i18n.language === lang && styles.regionCardActive
+                    ]}
+                    onPress={() => i18n.changeLanguage(lang)}
+                  >
+                    <Text style={[
+                      styles.regionCardTitle,
+                      i18n.language === lang && styles.regionCardTitleActive
+                    ]}>
+                      {lang === 'en' ? 'English' : 'नेपाली'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Theme Selection */}
+              <Text style={[styles.formLabel, { marginTop: spacing.l }]}>{t('home.onboarding.selectTheme')}</Text>
+              <View style={{ flexDirection: 'row', gap: spacing.m }}>
+                {(['light', 'dark'] as const).map((mode) => (
+                  <TouchableOpacity
+                    key={mode}
+                    style={[
+                      styles.regionCard,
+                      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.m },
+                      theme === mode && styles.regionCardActive
+                    ]}
+                    onPress={() => setTheme(mode)}
+                  >
+                    <Ionicons
+                      name={mode === 'light' ? 'sunny' : 'moon'}
+                      size={24}
+                      color={theme === mode ? colors.primary : colors.textSecondary}
+                      style={{ marginBottom: 4 }}
+                    />
+                    <Text style={[
+                      styles.regionCardTitle,
+                      theme === mode && styles.regionCardTitleActive
+                    ]}>
+                      {mode === 'light' ? 'Light' : 'Dark'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[styles.formLabel, { marginTop: spacing.l }]}>{t('home.onboarding.regionLabel')}</Text>
+              <Text style={styles.formHelper}>{t('home.onboarding.regionHelper')}</Text>
 
               <View style={styles.regionGrid}>
                 {REGIONS.map((r) => (
@@ -251,20 +325,20 @@ export default function HomeScreen() {
                       styles.regionCardTitle,
                       onboardingRegion === r.key && styles.regionCardTitleActive
                     ]}>
-                      {r.label}
+                      {t(`regions.${r.key}.label`)}
                     </Text>
                     <Text style={[
                       styles.regionCardDesc,
                       onboardingRegion === r.key && styles.regionCardDescActive
                     ]}>
-                      {r.description}
+                      {t(`regions.${r.key}.description`)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
               <TouchableOpacity style={styles.onboardingButton} onPress={handleOnboardingComplete}>
-                <Text style={styles.onboardingButtonText}>Get Started</Text>
+                <Text style={styles.onboardingButtonText}>{t('home.onboarding.getStarted')}</Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFF" />
               </TouchableOpacity>
             </View>

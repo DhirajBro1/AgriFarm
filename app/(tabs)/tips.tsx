@@ -5,6 +5,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ScrollView,
   StyleSheet,
@@ -19,6 +20,7 @@ import { FARMING_TIPS } from "../../utils/farmingData";
 export default function TipsScreen() {
   const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
 
   const [expandedTip, setExpandedTip] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export default function TipsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Farming Tips</Text>
+        <Text style={styles.headerTitle}>{t('tips.title')}</Text>
       </View>
 
       <View style={styles.filterContainer}>
@@ -45,7 +47,7 @@ export default function TipsScreen() {
               onPress={() => setSelectedCategory(cat)}
             >
               <Text style={[styles.pillText, selectedCategory === cat && styles.pillTextActive]}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {t(`tips.categories.${cat}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -85,7 +87,7 @@ export default function TipsScreen() {
                 <Text style={styles.description}>{tip.description}</Text>
                 {tip.season && (
                   <View style={styles.tag}>
-                    <Text style={styles.tagText}>Best for: {tip.season}</Text>
+                    <Text style={styles.tagText}>{t('tips.bestFor')} {tip.season}</Text>
                   </View>
                 )}
               </View>

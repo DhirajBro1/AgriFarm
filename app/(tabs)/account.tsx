@@ -6,6 +6,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   ScrollView,
@@ -23,6 +24,7 @@ import { REGIONS, RegionType } from "../../utils/farmingData";
 export default function AccountScreen() {
   const { colors, theme, toggleTheme, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
 
   const [username, setUsername] = useState("Farmer");
@@ -52,7 +54,7 @@ export default function AccountScreen() {
 
   const handleSave = async () => {
     if (!editName.trim()) {
-      Alert.alert("Error", "Name cannot be empty");
+      Alert.alert(t('common.error'), t('account.profile.nameEmpty'));
       return;
     }
 
@@ -71,10 +73,10 @@ export default function AccountScreen() {
       setRegion(editRegion);
       setIsEditing(false);
 
-      Alert.alert("Success", "Your profile has been updated!");
+      Alert.alert(t('common.success'), t('account.profile.updateSuccess'));
     } catch (error) {
       console.error('Error saving account data:', error);
-      Alert.alert("Error", "Failed to save changes. Please try again.");
+      Alert.alert(t('common.error'), t('account.profile.updateError'));
     }
   };
 
@@ -82,6 +84,11 @@ export default function AccountScreen() {
     setEditName(username);
     setEditRegion(region);
     setIsEditing(false);
+  };
+
+  const toggleLanguage = async () => {
+    const newLang = i18n.language === 'en' ? 'ne' : 'en';
+    await i18n.changeLanguage(newLang);
   };
 
   const MenuItem = ({ icon, label, onPress, value, description }: any) => (
@@ -104,7 +111,7 @@ export default function AccountScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Account</Text>
+        <Text style={styles.headerTitle}>{t('account.title')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -121,30 +128,30 @@ export default function AccountScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.profileName}>{username}</Text>
                   <Text style={styles.profileRole}>
-                    {REGIONS.find(r => r.key === region)?.label || 'Region Not Set'}
+                    {region ? t(`regions.${region}.label`) : t('account.profile.regionNotSet')}
                   </Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.editBtn} onPress={() => setIsEditing(true)}>
                 <Ionicons name="create-outline" size={20} color={colors.text} />
-                <Text style={styles.editBtnText}>Edit Profile</Text>
+                <Text style={styles.editBtnText}>{t('account.profile.editProfile')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             // EDIT MODE
             <View style={styles.editContainer}>
-              <Text style={styles.sectionTitle}>Edit Profile</Text>
+              <Text style={styles.sectionTitle}>{t('account.profile.editProfile')}</Text>
 
-              <Text style={styles.inputLabel}>Display Name</Text>
+              <Text style={styles.inputLabel}>{t('account.profile.displayName')}</Text>
               <TextInput
                 style={styles.input}
                 value={editName}
                 onChangeText={setEditName}
-                placeholder="Farmer Name"
+                placeholder={t('account.profile.namePlaceholder')}
                 placeholderTextColor={colors.textSecondary}
               />
 
-              <Text style={styles.inputLabel}>Select Region</Text>
+              <Text style={styles.inputLabel}>{t('account.profile.selectRegion')}</Text>
               <View style={styles.regionGrid}>
                 {REGIONS.map((r) => (
                   <TouchableOpacity
@@ -156,10 +163,10 @@ export default function AccountScreen() {
                     onPress={() => setEditRegion(r.key)}
                   >
                     <Text style={[styles.regionTitle, editRegion === r.key && styles.regionTitleActive]}>
-                      {r.label}
+                      {t(`regions.${r.key}.label`)}
                     </Text>
                     <Text style={[styles.regionDesc, editRegion === r.key && styles.regionDescActive]}>
-                      {r.description}
+                      {t(`regions.${r.key}.description`)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -167,10 +174,10 @@ export default function AccountScreen() {
 
               <View style={styles.editActions}>
                 <TouchableOpacity style={styles.saveAction} onPress={handleSave}>
-                  <Text style={styles.saveText}>Save Changes</Text>
+                  <Text style={styles.saveText}>{t('account.profile.saveChanges')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelAction} onPress={handleCancel}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                  <Text style={styles.cancelText}>{t('account.profile.cancel')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -181,13 +188,13 @@ export default function AccountScreen() {
         <View style={styles.settingsCard}>
           <View style={styles.cardHeader}>
             <Ionicons name="settings-outline" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>Preferences</Text>
+            <Text style={styles.cardTitle}>{t('account.preferences.title')}</Text>
           </View>
 
           <MenuItem
             icon="moon"
-            label="Dark Mode"
-            description="Toggle app theme"
+            label={t('account.preferences.darkMode')}
+            description={t('account.preferences.darkModeDesc')}
             value={
               <Switch
                 value={theme === 'dark'}
@@ -196,22 +203,35 @@ export default function AccountScreen() {
               />
             }
           />
-          <MenuItem icon="notifications" label="Notifications" description="Manage alerts" />
-          <MenuItem icon="language" label="Language" description="English / Nepali" />
+          <MenuItem
+            icon="notifications"
+            label={t('account.preferences.notifications')}
+            description={t('account.preferences.notificationsDesc')}
+          />
+          <MenuItem
+            icon="language"
+            label={t('account.preferences.language')}
+            description={t('account.preferences.languageDesc')}
+            onPress={toggleLanguage}
+            value={
+              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>
+                {i18n.language === 'en' ? 'English' : 'Nepali'}
+              </Text>
+            }
+          />
         </View>
 
         {/* About App */}
         <View style={styles.settingsCard}>
           <View style={styles.cardHeader}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>About</Text>
+            <Text style={styles.cardTitle}>{t('account.about.title')}</Text>
           </View>
           <Text style={styles.aboutText}>
-            AgriFarm helps Nepali farmers plan their crops based on their
-            province and the current Nepali month. Get personalized recomendations.
+            {t('account.about.description')}
           </Text>
           <View style={styles.versionBox}>
-            <Text style={styles.versionText}>Version 1.0.0.1</Text>
+            <Text style={styles.versionText}>{t('account.about.version')}</Text>
           </View>
         </View>
 
@@ -435,6 +455,7 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   versionText: {
     textAlign: 'center',
     color: colors.textSecondary,
-    fontSize: 12,
-  }
+  },
 });
+
+

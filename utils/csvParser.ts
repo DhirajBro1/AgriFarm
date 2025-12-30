@@ -8,6 +8,15 @@
  * - ph.csv: Soil pH requirements for different crops
  */
 
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system/legacy';
+
+// Import CSV files as assets (returns numeric ID)
+const cleanCSV = require('../data/clean.csv');
+const requirementsCSV = require('../data/requirements_for_crops.csv');
+const grownCSV = require('../data/grown.csv');
+const phCSV = require('../data/ph.csv');
+
 /**
  * Interface representing complete crop information
  * Combines data from multiple CSV sources
@@ -74,239 +83,65 @@ export interface CropGrowingInfo {
 }
 
 /**
- * Mock/fallback crop data used when CSV files cannot be loaded
- * Provides essential crop information for development and testing
+ * Helper to load CSV string from asset module
  */
-const MOCK_CROPS_DATA: CropData[] = [
-  {
-    crop: "Potato",
-    variety: "Kufri Jyoti",
-    sn: 1,
-    highHillSowing: "Falgun–Chaitra",
-    midHillSowing: "Asoj–Kartik",
-    teraiSowing: "Kartik–Mangsir",
-    compost: 1000,
-    nitrogen: 10.0,
-    phosphorus: 12.0,
-    potassium: 8.0,
-    plantSpacing: 20,
-    rowSpacing: 60,
-    seedRate: "100 kg",
-    maturityDays: "100–110",
-    yield: "2000–2500",
-    remarks: "Mid-hill high production",
-  },
-  {
-    crop: "Potato",
-    variety: "Janak Dev",
-    sn: 2,
-    highHillSowing: "Baisakh–Jestha",
-    midHillSowing: "Falgun–Chaitra",
-    teraiSowing: "Asoj–Kartik",
-    compost: 1000,
-    nitrogen: 10.0,
-    phosphorus: 12.0,
-    potassium: 8.0,
-    plantSpacing: 20,
-    rowSpacing: 60,
-    seedRate: "100 kg",
-    maturityDays: "100–110",
-    yield: "2000–2500",
-    remarks: "High altitude variety",
-  },
-  {
-    crop: "Sweet Potato",
-    variety: "Local",
-    sn: 6,
-    highHillSowing: "Baisakh–Jestha",
-    midHillSowing: "Falgun–Chaitra",
-    teraiSowing: "Bhadra–Asoj",
-    compost: 2000,
-    nitrogen: 4.0,
-    phosphorus: 3.0,
-    potassium: 3.0,
-    plantSpacing: 30,
-    rowSpacing: 60,
-    seedRate: "1500 cuttings",
-    maturityDays: "Not Specified",
-    yield: "1500–2000",
-    remarks: "",
-  },
-  {
-    crop: "Cabbage",
-    variety: "Green Coronet",
-    sn: 20,
-    highHillSowing: "Baisakh–Jestha",
-    midHillSowing: "Bhadra–Poush",
-    teraiSowing: "Kartik–Magh",
-    compost: 1500,
-    nitrogen: 8.0,
-    phosphorus: 6.0,
-    potassium: 4.0,
-    plantSpacing: 45,
-    rowSpacing: 45,
-    seedRate: "20 g (700 seedlings)",
-    maturityDays: "70–80",
-    yield: "Not Specified",
-    remarks: "",
-  },
-  {
-    crop: "Cauliflower",
-    variety: "Snow King",
-    sn: 23,
-    highHillSowing: "Baisakh–Jestha",
-    midHillSowing: "Bhadra–Kartik",
-    teraiSowing: "Asoj–Mangsir",
-    compost: 1500,
-    nitrogen: 8.0,
-    phosphorus: 6.0,
-    potassium: 4.0,
-    plantSpacing: 45,
-    rowSpacing: 45,
-    seedRate: "20 g (700 seedlings)",
-    maturityDays: "Not Specified",
-    yield: "Not Specified",
-    remarks: "",
-  },
-  {
-    crop: "Carrot",
-    variety: "Pusa Kesar",
-    sn: 15,
-    midHillSowing: "Jestha–Bhadra",
-    teraiSowing: "Asoj–Mangsir",
-    compost: 1000,
-    nitrogen: 3.0,
-    phosphorus: 4.0,
-    potassium: 3.0,
-    plantSpacing: 10,
-    rowSpacing: 30,
-    seedRate: "40 g",
-    maturityDays: "Not Specified",
-    yield: "Not Specified",
-    remarks: "",
-  },
-  {
-    crop: "Radish",
-    variety: "Kathmandu Local",
-    sn: 17,
-    highHillSowing: "Baisakh–Bhadra",
-    midHillSowing: "Shrawan–Chaitra",
-    teraiSowing: "Asoj–Mangsir",
-    compost: 1000,
-    nitrogen: 4.0,
-    phosphorus: 6.0,
-    potassium: 3.0,
-    plantSpacing: 15,
-    rowSpacing: 30,
-    seedRate: "100 g",
-    maturityDays: "Not Specified",
-    yield: "Not Specified",
-    remarks: "",
-  },
-  {
-    crop: "Broccoli",
-    variety: "Green Sprouting",
-    sn: 25,
-    highHillSowing: "Baisakh–Jestha",
-    midHillSowing: "Bhadra–Kartik",
-    teraiSowing: "Asoj–Mangsir",
-    compost: 1500,
-    nitrogen: 8.0,
-    phosphorus: 6.0,
-    potassium: 4.0,
-    plantSpacing: 45,
-    rowSpacing: 45,
-    seedRate: "20 g (700 seedlings)",
-    maturityDays: "Not Specified",
-    yield: "Not Specified",
-    remarks: "",
-  },
-  {
-    crop: "Garlic",
-    variety: "Local",
-    sn: 27,
-    highHillSowing: "Baisakh–Jestha",
-    midHillSowing: "Shrawan–Magh",
-    teraiSowing: "Asoj–Kartik",
-    compost: 1500,
-    nitrogen: 12.0,
-    phosphorus: 12.0,
-    potassium: 4.0,
-    plantSpacing: 15,
-    rowSpacing: 15,
-    seedRate: "2500 g",
-    maturityDays: "Not Specified",
-    yield: "Not Specified",
-    remarks: "",
-  },
-  {
-    crop: "Turnip",
-    variety: "Purple Top",
-    sn: 29,
-    highHillSowing: "Jestha–Shrawan",
-    midHillSowing: "Shrawan–Falgun",
-    teraiSowing: "Asoj–Mangsir",
-    compost: 1000,
-    nitrogen: 4.0,
-    phosphorus: 6.0,
-    potassium: 3.0,
-    plantSpacing: 10,
-    rowSpacing: 30,
-    seedRate: "100 g",
-    maturityDays: "Not Specified",
-    yield: "Not Specified",
-    remarks: "",
-  },
-];
+async function loadCSVAsset(module: any): Promise<string> {
+  try {
+    const asset = Asset.fromModule(module);
+    await asset.downloadAsync();
 
-const MOCK_PH_DATA: PHData[] = [
-  {
-    vegetable: "Potato",
-    optimalPHRange: "5.0-6.0",
-    categoryPreference:
-      "Acidic (Generally grown in acidic soil to manage potato scab)",
-  },
-  {
-    vegetable: "Sweet Potato",
-    optimalPHRange: "5.5-6.8",
-    categoryPreference: "Acidic to Mildly Acidic",
-  },
-  {
-    vegetable: "Cabbage",
-    optimalPHRange: "6.0-6.8",
-    categoryPreference: "Slightly Acidic to Neutral",
-  },
-  {
-    vegetable: "Cauliflower",
-    optimalPHRange: "5.5-7.5",
-    categoryPreference: "Mildly Acidic to Neutral",
-  },
-  {
-    vegetable: "Carrot",
-    optimalPHRange: "5.8-6.8",
-    categoryPreference: "Mildly Acidic to Neutral",
-  },
-  {
-    vegetable: "Radish",
-    optimalPHRange: "5.8-6.8",
-    categoryPreference: "Mildly Acidic to Neutral",
-  },
-  {
-    vegetable: "Garlic",
-    optimalPHRange: "5.5-8.0",
-    categoryPreference: "Acidic to Alkaline",
-  },
-  {
-    vegetable: "Turnip",
-    optimalPHRange: "5.5-6.8",
-    categoryPreference: "Mildly Acidic to Neutral",
-  },
-];
+    // Fallback logic: check for local URI first, then fall back to fetching via HTTP (dev server)
+    if (asset.localUri) {
+      try {
+        return await FileSystem.readAsStringAsync(asset.localUri);
+      } catch (fsError) {
+        console.warn('FileSystem read failed, trying fetch:', fsError);
+      }
+    }
+
+    if (asset.uri) {
+      const response = await fetch(asset.uri);
+      return await response.text();
+    }
+
+    return "";
+  } catch (e) {
+    console.error("Failed to load CSV asset:", e);
+    return "";
+  }
+}
+
+/**
+ * Parse CSV text into array of objects
+ */
+function parseCSV(csvText: string): any[] {
+  if (!csvText) return [];
+  const lines = csvText.split(/\r?\n/).filter((line: string) => line.trim());
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split(',');
+  const data = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',');
+    // Basic CSV parsing handling quoted values could be added here if needed
+    // For now simple split is used as per dataset
+    const row: any = {};
+
+    headers.forEach((header, index) => {
+      row[header.trim()] = values[index] ? values[index].trim() : '';
+    });
+
+    data.push(row);
+  }
+
+  return data;
+}
 
 class CSVParser {
   private static instance: CSVParser;
-  private cropsData: CropData[] = MOCK_CROPS_DATA;
-  private phData: PHData[] = MOCK_PH_DATA;
+  private cropsData: CropData[] = [];
+  private phData: PHData[] = [];
   private requirementsData: CropRequirement[] = [];
   private growingData: CropGrowingInfo[] = [];
   private initialized = false;
@@ -322,33 +157,84 @@ class CSVParser {
     if (this.initialized) return;
 
     try {
-      this.requirementsData = this.cropsData.map((crop) => ({
-        crop: crop.crop,
-        variety: crop.variety,
-        compost: crop.compost,
-        nitrogen: crop.nitrogen,
-        phosphorus: crop.phosphorus,
-        potassium: crop.potassium,
-        plantSpacing: crop.plantSpacing,
-        rowSpacing: crop.rowSpacing,
-        seedRate: crop.seedRate,
-        maturityDays: crop.maturityDays,
-        yield: crop.yield,
-        remarks: crop.remarks,
+      console.log('📂 Loading CSV files...');
+
+      // Load CSV strings properly asynchronously
+      const cleanText = await loadCSVAsset(cleanCSV);
+      const requirementsText = await loadCSVAsset(requirementsCSV);
+      const grownText = await loadCSVAsset(grownCSV);
+      const phText = await loadCSVAsset(phCSV);
+
+      // Parse clean.csv (main crop data)
+      const cleanData = parseCSV(cleanText);
+      console.log(`✅ Loaded ${cleanData.length} crops from clean.csv`);
+
+      this.cropsData = cleanData.map((row: any) => ({
+        crop: row.Crop || '',
+        variety: row.Variety || '',
+        sn: row.SN ? parseInt(row.SN) : undefined,
+        highHillSowing: row.High_Hill_Sowing || undefined,
+        midHillSowing: row.Mid_Hill_Sowing || undefined,
+        teraiSowing: row.Terai_Bensi_Sowing || undefined,
+        compost: parseFloat(row.Compost_kg_ropani) || 0,
+        nitrogen: parseFloat(row.N_kg_ropani) || 0,
+        phosphorus: parseFloat(row.P_kg_ropani) || 0,
+        potassium: parseFloat(row.K_kg_ropani) || 0,
+        plantSpacing: parseFloat(row.Plant_Spacing_cm) || 0,
+        rowSpacing: parseFloat(row.Row_Spacing_cm) || 0,
+        seedRate: row.Seed_Seedling_Rate || '',
+        maturityDays: row.Maturity_Days || '',
+        yield: row.Yield_kg_ropani || '',
+        remarks: row.Remarks || '',
       }));
 
-      this.growingData = this.cropsData.map((crop) => ({
-        crop: crop.crop,
-        variety: crop.variety,
-        highHillSowing: crop.highHillSowing,
-        midHillSowing: crop.midHillSowing,
-        teraiSowing: crop.teraiSowing,
-        remarks: crop.remarks,
+      // Parse requirements_for_crops.csv
+      const requirementsRaw = parseCSV(requirementsText);
+      console.log(`✅ Loaded ${requirementsRaw.length} crop requirements`);
+
+      this.requirementsData = requirementsRaw.map((row: any) => ({
+        crop: row.Crop || '',
+        variety: row.Variety || '',
+        compost: parseFloat(row.Compost_kg_ropani) || 0,
+        nitrogen: parseFloat(row.N_kg_ropani) || 0,
+        phosphorus: parseFloat(row.P_kg_ropani) || 0,
+        potassium: parseFloat(row.K_kg_ropani) || 0,
+        plantSpacing: parseFloat(row.Plant_Spacing_cm) || 0,
+        rowSpacing: parseFloat(row.Row_Spacing_cm) || 0,
+        seedRate: row.Seed_Seedling_Rate || '',
+        maturityDays: row.Maturity_Days || '',
+        yield: row.Yield_kg_ropani || '',
+        remarks: row.Remarks || '',
+      }));
+
+      // Parse grown.csv
+      const grownRaw = parseCSV(grownText);
+      console.log(`✅ Loaded ${grownRaw.length} growing info records`);
+
+      this.growingData = grownRaw.map((row: any) => ({
+        crop: row.Crop || '',
+        variety: row.Variety || '',
+        highHillSowing: row.High_Hill_Sowing || undefined,
+        midHillSowing: row.Mid_Hill_Sowing || undefined,
+        teraiSowing: row.Terai_Bensi_Sowing || undefined,
+        remarks: row.Remarks || '',
+      }));
+
+      // Parse ph.csv
+      const phRaw = parseCSV(phText);
+      console.log(`✅ Loaded ${phRaw.length} pH records`);
+
+      this.phData = phRaw.map((row: any) => ({
+        vegetable: row.Vegetable || '',
+        optimalPHRange: row.Optimal_pH_Range || '',
+        categoryPreference: row.General_Category_Preference || '',
       }));
 
       this.initialized = true;
+      console.log('🎉 CSV Parser initialized successfully!');
     } catch (error) {
-      console.error("Error initializing CSV parser:", error);
+      console.error('❌ Error initializing CSV parser:', error);
+      console.log('⚠️ Using empty dataset as fallback');
       this.initialized = false;
     }
   }

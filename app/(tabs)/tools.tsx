@@ -5,6 +5,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Keyboard,
   Modal,
@@ -47,6 +48,7 @@ const WEIGHT_UNITS = {
 export default function ToolsScreen() {
   const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
 
   const [activeTool, setActiveTool] = useState('yield');
@@ -54,7 +56,7 @@ export default function ToolsScreen() {
   // Yield Calc State
   const [landArea, setLandArea] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCrop, setSelectedCrop] = useState<string>("Select Crop");
+  const [selectedCrop, setSelectedCrop] = useState<string>("");
   const [calculatedYield, setCalculatedYield] = useState<string | null>(null);
 
   // Area Converter State
@@ -78,7 +80,7 @@ export default function ToolsScreen() {
   const csvParser = useMemo(() => CSVParser.getInstance(), []);
 
   const calculateYield = () => {
-    if (!landArea || selectedCrop === "Select Crop") return;
+    if (!landArea || selectedCrop === "") return;
 
     const cropData = csvParser.getCropInfo(selectedCrop);
     let avgYield = 2000;
@@ -125,18 +127,18 @@ export default function ToolsScreen() {
     if (activeTool === 'yield') {
       return (
         <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>Crop Yield Estimator</Text>
-          <Text style={styles.toolDesc}>Estimate your harvest based on land size and crop type.</Text>
+          <Text style={styles.toolTitle}>{t('tools.yieldCalculator.title')}</Text>
+          <Text style={styles.toolDesc}>{t('tools.yieldCalculator.subtitle')}</Text>
 
-          <Text style={styles.inputLabel}>Crop Type</Text>
+          <Text style={styles.inputLabel}>{t('common.selectCrop')}</Text>
           <TouchableOpacity style={styles.selectorBtn} onPress={() => setModalVisible(true)}>
-            <Text style={[styles.selectorText, selectedCrop === "Select Crop" && styles.placeholderText]}>
-              {selectedCrop}
+            <Text style={[styles.selectorText, selectedCrop === "" && styles.placeholderText]}>
+              {selectedCrop || t('common.selectCrop')}
             </Text>
             <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <Text style={styles.inputLabel}>Land Area (Ropani)</Text>
+          <Text style={styles.inputLabel}>{t('tools.yieldCalculator.area')}</Text>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -146,16 +148,16 @@ export default function ToolsScreen() {
               value={landArea}
               onChangeText={setLandArea}
             />
-            <Text style={styles.unitText}>Ropani</Text>
+            <Text style={styles.unitText}>{t('tools.areaConverter.units.ropani')}</Text>
           </View>
 
           <TouchableOpacity style={styles.actionBtn} onPress={calculateYield}>
-            <Text style={styles.actionBtnText}>Calculate Output</Text>
+            <Text style={styles.actionBtnText}>{t('tools.yieldCalculator.calculate')}</Text>
           </TouchableOpacity>
 
           {calculatedYield && (
             <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Estimated Harvest</Text>
+              <Text style={styles.resultLabel}>{t('tools.yieldCalculator.result')}</Text>
               <Text style={styles.resultValue}>{calculatedYield}</Text>
             </View>
           )}
@@ -166,14 +168,14 @@ export default function ToolsScreen() {
     if (activeTool === 'area') {
       return (
         <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>Area Converter</Text>
-          <Text style={styles.toolDesc}>Convert between different land measurement units.</Text>
+          <Text style={styles.toolTitle}>{t('tools.areaConverter.title')}</Text>
+          <Text style={styles.toolDesc}>{t('tools.areaConverter.subtitle')}</Text>
 
-          <Text style={styles.inputLabel}>From</Text>
+          <Text style={styles.inputLabel}>{t('tools.areaConverter.from')}</Text>
           <View style={styles.converterRow}>
             <TextInput
               style={[styles.input, { flex: 1 }]}
-              placeholder="Enter value"
+              placeholder={t('tools.areaConverter.enterValue')}
               placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={areaValue}
@@ -184,7 +186,7 @@ export default function ToolsScreen() {
                 style={styles.unitBtn}
                 onPress={() => setShowAreaFromPicker(true)}
               >
-                <Text style={styles.unitBtnText}>{AREA_UNITS[areaFromUnit].name}</Text>
+                <Text style={styles.unitBtnText}>{t(`tools.areaConverter.units.${areaFromUnit}`)}</Text>
                 <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
@@ -203,24 +205,24 @@ export default function ToolsScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.inputLabel}>To</Text>
+          <Text style={styles.inputLabel}>{t('tools.areaConverter.to')}</Text>
           <View style={styles.unitSelector}>
             <TouchableOpacity
               style={styles.unitBtn}
               onPress={() => setShowAreaToPicker(true)}
             >
-              <Text style={styles.unitBtnText}>{AREA_UNITS[areaToUnit].name}</Text>
+              <Text style={styles.unitBtnText}>{t(`tools.areaConverter.units.${areaToUnit}`)}</Text>
               <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.actionBtn} onPress={convertArea}>
-            <Text style={styles.actionBtnText}>Convert</Text>
+            <Text style={styles.actionBtnText}>{t('tools.areaConverter.convert')}</Text>
           </TouchableOpacity>
 
           {areaResult && (
             <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Result</Text>
+              <Text style={styles.resultLabel}>{t('tools.areaConverter.result')}</Text>
               <Text style={styles.resultValue}>{areaResult}</Text>
             </View>
           )}
@@ -231,14 +233,14 @@ export default function ToolsScreen() {
     if (activeTool === 'unit') {
       return (
         <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>Weight Converter</Text>
-          <Text style={styles.toolDesc}>Convert between different weight measurement units.</Text>
+          <Text style={styles.toolTitle}>{t('tools.weightConverter.title')}</Text>
+          <Text style={styles.toolDesc}>{t('tools.weightConverter.subtitle')}</Text>
 
-          <Text style={styles.inputLabel}>From</Text>
+          <Text style={styles.inputLabel}>{t('tools.weightConverter.from')}</Text>
           <View style={styles.converterRow}>
             <TextInput
               style={[styles.input, { flex: 1 }]}
-              placeholder="Enter value"
+              placeholder={t('tools.weightConverter.enterWeight')}
               placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={weightValue}
@@ -249,7 +251,7 @@ export default function ToolsScreen() {
                 style={styles.unitBtn}
                 onPress={() => setShowWeightFromPicker(true)}
               >
-                <Text style={styles.unitBtnText}>{WEIGHT_UNITS[weightFromUnit].name}</Text>
+                <Text style={styles.unitBtnText}>{t(`tools.weightConverter.units.${weightFromUnit}`)}</Text>
                 <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
@@ -268,24 +270,24 @@ export default function ToolsScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.inputLabel}>To</Text>
+          <Text style={styles.inputLabel}>{t('tools.weightConverter.to')}</Text>
           <View style={styles.unitSelector}>
             <TouchableOpacity
               style={styles.unitBtn}
               onPress={() => setShowWeightToPicker(true)}
             >
-              <Text style={styles.unitBtnText}>{WEIGHT_UNITS[weightToUnit].name}</Text>
+              <Text style={styles.unitBtnText}>{t(`tools.weightConverter.units.${weightToUnit}`)}</Text>
               <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.actionBtn} onPress={convertWeight}>
-            <Text style={styles.actionBtnText}>Convert</Text>
+            <Text style={styles.actionBtnText}>{t('tools.weightConverter.convert')}</Text>
           </TouchableOpacity>
 
           {weightResult && (
             <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Result</Text>
+              <Text style={styles.resultLabel}>{t('tools.weightConverter.result')}</Text>
               <Text style={styles.resultValue}>{weightResult}</Text>
             </View>
           )}
@@ -298,24 +300,24 @@ export default function ToolsScreen() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Farming Tools</Text>
+          <Text style={styles.headerTitle}>{t('tools.title')}</Text>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={{ paddingHorizontal: spacing.l }}>
-          {TOOLS.map((t) => (
+          {TOOLS.map((tool) => (
             <TouchableOpacity
-              key={t.id}
-              style={[styles.tab, activeTool === t.id && { backgroundColor: colors.primary }]}
+              key={tool.id}
+              style={[styles.tab, activeTool === tool.id && { backgroundColor: colors.primary }]}
               onPress={() => {
-                setActiveTool(t.id);
+                setActiveTool(tool.id);
                 setCalculatedYield(null);
                 setAreaResult(null);
                 setWeightResult(null);
               }}
             >
-              <Ionicons name={t.icon as any} size={16} color={activeTool === t.id ? '#FFF' : colors.text} style={{ marginRight: 6 }} />
-              <Text style={[styles.tabText, activeTool === t.id && styles.tabTextActive]}>
-                {t.name}
+              <Ionicons name={tool.icon as any} size={16} color={activeTool === tool.id ? '#FFF' : colors.text} style={{ marginRight: 6 }} />
+              <Text style={[styles.tabText, activeTool === tool.id && styles.tabTextActive]}>
+                {t(`tools.toolNames.${tool.id}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -330,7 +332,7 @@ export default function ToolsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Crop</Text>
+                <Text style={styles.modalTitle}>{t('common.selectCrop')}</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -356,7 +358,7 @@ export default function ToolsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select From Unit</Text>
+                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.from')})</Text>
                 <TouchableOpacity onPress={() => setShowAreaFromPicker(false)}>
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -368,7 +370,7 @@ export default function ToolsScreen() {
                     style={styles.cropOption}
                     onPress={() => { setAreaFromUnit(key); setShowAreaFromPicker(false); }}
                   >
-                    <Text style={styles.cropOptionText}>{AREA_UNITS[key].name}</Text>
+                    <Text style={styles.cropOptionText}>{t(`tools.areaConverter.units.${key}`)}</Text>
                     {areaFromUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                   </TouchableOpacity>
                 ))}
@@ -382,7 +384,7 @@ export default function ToolsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select To Unit</Text>
+                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.to')})</Text>
                 <TouchableOpacity onPress={() => setShowAreaToPicker(false)}>
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -394,7 +396,7 @@ export default function ToolsScreen() {
                     style={styles.cropOption}
                     onPress={() => { setAreaToUnit(key); setShowAreaToPicker(false); }}
                   >
-                    <Text style={styles.cropOptionText}>{AREA_UNITS[key].name}</Text>
+                    <Text style={styles.cropOptionText}>{t(`tools.areaConverter.units.${key}`)}</Text>
                     {areaToUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                   </TouchableOpacity>
                 ))}
@@ -408,7 +410,7 @@ export default function ToolsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select From Unit</Text>
+                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.from')})</Text>
                 <TouchableOpacity onPress={() => setShowWeightFromPicker(false)}>
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -420,7 +422,7 @@ export default function ToolsScreen() {
                     style={styles.cropOption}
                     onPress={() => { setWeightFromUnit(key); setShowWeightFromPicker(false); }}
                   >
-                    <Text style={styles.cropOptionText}>{WEIGHT_UNITS[key].name}</Text>
+                    <Text style={styles.cropOptionText}>{t(`tools.weightConverter.units.${key}`)}</Text>
                     {weightFromUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                   </TouchableOpacity>
                 ))}
@@ -434,7 +436,7 @@ export default function ToolsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select To Unit</Text>
+                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.to')})</Text>
                 <TouchableOpacity onPress={() => setShowWeightToPicker(false)}>
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -446,7 +448,7 @@ export default function ToolsScreen() {
                     style={styles.cropOption}
                     onPress={() => { setWeightToUnit(key); setShowWeightToPicker(false); }}
                   >
-                    <Text style={styles.cropOptionText}>{WEIGHT_UNITS[key].name}</Text>
+                    <Text style={styles.cropOptionText}>{t(`tools.weightConverter.units.${key}`)}</Text>
                     {weightToUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                   </TouchableOpacity>
                 ))}
