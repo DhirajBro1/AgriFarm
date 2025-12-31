@@ -256,7 +256,7 @@ export default function HomeScreen() {
 
   // Initial position (bottom right)
   const initialX = screenWidth - fabSize - 20;
-  const initialY = screenHeight - 120;
+  const initialY = screenHeight - 160;
 
   const fabX = useSharedValue(initialX);
   const fabY = useSharedValue(initialY);
@@ -287,7 +287,7 @@ export default function HomeScreen() {
 
       // Keep within vertical bounds
       const minY = insets.top + 100;
-      const maxY = screenHeight - 120;
+      const maxY = screenHeight - 160;
 
       if (fabY.value < minY) {
         fabY.value = withSpring(minY);
@@ -704,9 +704,9 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   },
 
   fabInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#2ecc71',
     borderWidth: 2,
     borderColor: '#1f7a36',
@@ -725,8 +725,8 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   },
 
   fabImage: {
-    width: 40,
-    height: 40,
+    width: 86,
+    height: 86,
     resizeMode: 'contain',
   },
 
@@ -736,13 +736,13 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     paddingVertical: 6,
 
     backgroundColor: '#ffffff',
-    borderRadius: 20,
+    borderRadius: 50,
     borderWidth: 1,
     borderColor: '#d0dcd2',
   },
 
   fabLabelText: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1f7a36',
   },

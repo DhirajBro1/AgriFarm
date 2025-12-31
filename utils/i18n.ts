@@ -20,7 +20,7 @@ const translations: Record<Lang, Record<string, string>> = {
     advanced: 'Advanced',
     advancedDescription: 'Advanced AI settings',
     about: 'About',
-    aboutText: 'AgriFarm is developed by IT group of Radhika Secondary School which helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized recomendations.',
+    aboutText: 'AgriFarm is developed by 3 students (Chirayu, Dhiraj, Yogesh) which helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized recomendations.',
     version: 'Version',
 
     scanPlant: 'Scan Plant',
@@ -88,7 +88,7 @@ const translations: Record<Lang, Record<string, string>> = {
     advanced: 'उन्नत',
     advancedDescription: 'उन्नत AI सेटिङ्स',
     about: 'बारेमा',
-    aboutText: 'AgriFarm लाई Radhika Secondary School को IT समूहले विकास गरेको हो जसले नेपाली किसानहरुलाई उनीहरुको प्रदेश र हालको नेपाली महिनाको आधारमा बाली योजना बनाउन मद्दत गर्छ।',
+    aboutText: 'AgriFarm लाई ३ वटा विद्यार्थीहरुले (चिरयु , धिरज , योगेश ) विकास गरेको हो जसले नेपाली किसानहरुलाई उनीहरुको प्रदेश र हालको नेपाली महिनाको आधारमा बाली योजना बनाउन मद्दत गर्छ।',
     version: 'संस्करण',
 
     scanPlant: 'बिरुवा जाँच गर्नुहोस्',
