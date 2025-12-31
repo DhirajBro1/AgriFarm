@@ -252,7 +252,15 @@
         "select": "Select",
         "selectCrop": "Select Crop",
         "from": "From",
-        "to": "To"
+        "to": "To",
+        "languages": {
+            "en": "English",
+            "ne": "Nepali"
+        },
+        "themes": {
+            "light": "Light",
+            "dark": "Dark"
+        }
     },
     "agribot": {
         "title": "AgriBot AI",

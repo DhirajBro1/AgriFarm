@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, TouchableOpacity } from 'react-native';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AgriBotModal from '../../components/AgriBotModal';
+import DraggableFAB from '../../components/DraggableFAB';
 import { useTheme } from '../../theme/ThemeProvider';
 
 export default function TabLayout() {
@@ -22,7 +23,6 @@ export default function TabLayout() {
                     tabBarStyle: {
                         backgroundColor: colors.navBackground,
                         borderTopColor: colors.border,
-                        // Dynamic height based on safe area
                         height: Platform.OS === 'ios' ? 88 : 60 + insets.bottom,
                         paddingBottom: Platform.OS === 'ios' ? 28 : insets.bottom + 4,
                         paddingTop: 8,
@@ -31,7 +31,6 @@ export default function TabLayout() {
                     tabBarInactiveTintColor: colors.navInactive,
                     tabBarLabelStyle: {
                         fontSize: 12,
-                        // Use system font or a nice sans-serif
                         fontFamily: Platform.select({ ios: 'System', android: 'sans-serif-medium' }),
                         fontWeight: '600',
                         marginBottom: 4,
@@ -85,27 +84,10 @@ export default function TabLayout() {
                 />
             </Tabs>
 
-            <TouchableOpacity
-                style={{
-                    position: 'absolute',
-                    bottom: Platform.OS === 'ios' ? 100 : 80 + insets.bottom,
-                    right: 20,
-                    width: 56,
-                    height: 56,
-                    borderRadius: 28,
-                    backgroundColor: colors.primary,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    elevation: 5,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                }}
+            <DraggableFAB
                 onPress={() => setAgriBotVisible(true)}
-            >
-                <Ionicons name="chatbubble-ellipses" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
+                backgroundColor={colors.primary}
+            />
 
             <AgriBotModal
                 visible={isAgriBotVisible}

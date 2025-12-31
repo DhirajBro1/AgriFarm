@@ -273,7 +273,7 @@ export default function HomeScreen() {
                       styles.regionCardTitle,
                       i18n.language === lang && styles.regionCardTitleActive
                     ]}>
-                      {lang === 'en' ? 'English' : 'नेपाली'}
+                      {t(`common.languages.${lang}`)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -302,7 +302,7 @@ export default function HomeScreen() {
                       styles.regionCardTitle,
                       theme === mode && styles.regionCardTitleActive
                     ]}>
-                      {mode === 'light' ? 'Light' : 'Dark'}
+                      {t(`common.themes.${mode}`)}
                     </Text>
                   </TouchableOpacity>
                 ))}

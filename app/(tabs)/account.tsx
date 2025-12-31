@@ -215,7 +215,7 @@ export default function AccountScreen() {
             onPress={toggleLanguage}
             value={
               <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>
-                {i18n.language === 'en' ? 'English' : 'Nepali'}
+                {t(`common.languages.${i18n.language}`)}
               </Text>
             }
           />
