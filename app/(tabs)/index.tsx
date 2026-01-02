@@ -24,6 +24,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser, { CropData } from "../../utils/csvParser";
 import { getCurrentNepaliMonth, REGIONS, RegionType } from "../../utils/farmingData";
+import AgriBot from "../../components/AgriBot";
+import GeminiDiseaseService from "../../services/geminiDiseaseService";
+import { Image } from "react-native";
 
 
 export default function HomeScreen() {
@@ -43,11 +46,18 @@ export default function HomeScreen() {
   const [onboardingName, setOnboardingName] = useState("");
   const [onboardingRegion, setOnboardingRegion] = useState<RegionType>("mid");
   const [refreshing, setRefreshing] = useState(false);
+  const [recommendations, setRecommendations] = useState<{
+    title: string;
+    recommendations: string[];
+    tips: string[];
+  } | null>(null);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   useEffect(() => {
     checkFirstTime();
     loadData();
-  }, []);
+    loadRecommendations();
+  }, [i18n.language]);
 
   const checkFirstTime = async () => {
     const isFirstTime = await AsyncStorage.getItem("onboardingComplete");
@@ -81,19 +91,23 @@ export default function HomeScreen() {
     const name = await AsyncStorage.getItem("username");
     if (name) setUsername(name);
 
-    // Load Seasonal Crops
-    const parser = CSVParser.getInstance();
-    await parser.initialize();
+    // Load Seasonal Crops from local CSV
+    try {
+      const parser = CSVParser.getInstance();
+      await parser.initialize();
 
-    const region = (await AsyncStorage.getItem("region")) as 'high' | 'mid' | 'terai' || 'mid';
-    const crops = parser.getCropsByMonth(currentMonth, region);
+      const region = (await AsyncStorage.getItem("region")) as 'high' | 'mid' | 'terai' || 'mid';
+      const crops = parser.getCropsByMonth(currentMonth, region);
 
-    const unique = Array.from(new Set(crops.map(c => c.crop)))
-      .map(name => crops.find(c => c.crop === name))
-      .filter((c): c is CropData => !!c)
-      .slice(0, 3);
+      const unique = Array.from(new Set(crops.map(c => c.crop)))
+        .map(name => crops.find(c => c.crop === name))
+        .filter((c): c is CropData => !!c)
+        .slice(0, 3);
 
-    setSeasonalCrops(unique);
+      setSeasonalCrops(unique);
+    } catch (error) {
+      console.error('❌ Failed to load seasonal crops from CSV:', error);
+    }
   };
 
   const onRefresh = React.useCallback(async () => {
@@ -101,6 +115,43 @@ export default function HomeScreen() {
     await loadData();
     setRefreshing(false);
   }, []);
+
+  const loadRecommendations = async () => {
+    setRecommendationsLoading(true);
+    try {
+      const region = (await AsyncStorage.getItem("region")) as 'high' | 'mid' | 'terai' || 'mid';
+      const lang = i18n.language.startsWith('ne') ? 'ne' : 'en';
+
+      const regionNames = {
+        high: 'High Hills',
+        mid: 'Mid Hills',
+        terai: 'Terai'
+      };
+
+      const regionName = regionNames[region] || 'Mid Hills';
+      const recs = await GeminiDiseaseService.getHomeRecommendations(regionName, currentMonth, lang as 'en' | 'ne');
+      setRecommendations(recs);
+    } catch (error) {
+      console.error('❌ Failed to load recommendations:', error);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  };
+
+  const getCropIcon = (cropName: string) => {
+    const name = cropName.toLowerCase();
+    if (name.includes('wheat')) return require('../../assets/images/crops/wheat.png');
+    if (name.includes('rice')) return require('../../assets/images/crops/rice.png');
+    if (name.includes('corn') || name.includes('maize')) return require('../../assets/images/crops/corn.png');
+    if (name.includes('potato')) return require('../../assets/images/crops/potato.png');
+    if (name.includes('tomato')) return require('../../assets/images/crops/tomato.png');
+    if (name.includes('cabbage')) return require('../../assets/images/crops/cabbage.png');
+    if (name.includes('cauliflower')) return require('../../assets/images/crops/cauliflower.jpeg');
+    if (name.includes('onion')) return require('../../assets/images/crops/onion.png');
+    if (name.includes('lentil') || name.includes('dal')) return require('../../assets/images/crops/lentil.png');
+    if (name.includes('mustard')) return require('../../assets/images/crops/mustard.png');
+    return require('../../assets/images/crops/wheat.png');
+  };
 
   const features = [
     {
@@ -191,13 +242,16 @@ export default function HomeScreen() {
               <View style={[styles.iconBox, { backgroundColor: `${item.color}20` }]}>
                 <Ionicons name={item.icon as any} size={28} color={item.color} />
               </View>
-              <Text style={styles.featureTitle}>{item.title}</Text>
-              <Text style={styles.featureSubtitle}>{item.subtitle}</Text>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureTitle}>{item.title}</Text>
+                <Text style={styles.featureSubtitle}>{item.subtitle}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Seasonal Recommendations Widget */}
+        {/* Seasonal Recommendations Widget (Local CSV) */}
         <TouchableOpacity
           style={styles.widgetCard}
           onPress={() => router.push({ pathname: "/(tabs)/crops", params: { tab: 'calendar' } })}
@@ -227,8 +281,73 @@ export default function HomeScreen() {
           )}
         </TouchableOpacity>
 
+
+        {/* Recommended Crops Section */}
+        {recommendations && (
+          <View style={styles.cropsSection}>
+            <View style={styles.cropsHeader}>
+              <Ionicons name="leaf" size={24} color="#10B981" />
+              <Text style={styles.cropsTitle}>{recommendations.title}</Text>
+            </View>
+
+            <View style={styles.cropsGrid}>
+              {recommendations.recommendations.map((rec, index) => {
+                let cropName = rec.split(' - ')[0] || rec.split(': ')[0] || rec;
+                cropName = cropName.replace(/\*\*/g, '').replace(/\*/g, '').trim();
+                const mainCropName = cropName.split('(')[0].trim();
+                const reason = rec.split(' - ')[1] || rec.split(': ')[1] || t('home.seasonal.more');
+
+                return (
+                  <View key={index} style={styles.cropCard}>
+                    <View style={styles.cropIcon}>
+                      <Image source={getCropIcon(mainCropName)} style={styles.cropIconImage} resizeMode="contain" />
+                    </View>
+                    <Text style={styles.cropName}>{mainCropName}</Text>
+                    <Text style={styles.cropReason}>{reason}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* AI Tips Section */}
+        {recommendations && (
+          <View style={styles.tipsCard}>
+            <View style={styles.tipsHeader}>
+              <View style={styles.tipsBadge}>
+                <Ionicons name="bulb" size={16} color="#F59E0B" />
+                <Text style={styles.tipsBadgeText}>{t('home.features.tips.title')}</Text>
+              </View>
+            </View>
+
+            <View style={styles.tipsContent}>
+              {recommendations.tips.map((tip, index) => (
+                <View key={index} style={styles.tipItem}>
+                  <View style={styles.tipBullet}>
+                    <Text style={styles.tipBulletText}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.tipText}>{tip}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {recommendationsLoading && (
+          <View style={styles.recommendationsCard}>
+            <View style={styles.loadingIndicator}>
+              <View style={styles.loadingDot} />
+              <View style={[styles.loadingDot, { opacity: 0.4 }]} />
+              <View style={[styles.loadingDot, { opacity: 0.2 }]} />
+            </View>
+          </View>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <AgriBot />
 
       {/* Onboarding Modal */}
       <Modal visible={showOnboarding} animationType="slide" transparent={false}>
@@ -440,17 +559,16 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     marginLeft: spacing.xs,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: spacing.m,
     marginBottom: spacing.xl,
   },
   featureCard: {
-    width: '31%',
+    width: '100%',
     backgroundColor: colors.card,
     borderRadius: 20,
     padding: spacing.m,
-    marginBottom: spacing.m,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: colors.shadow,
@@ -458,7 +576,6 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
-    alignItems: 'center',
   },
   iconBox: {
     width: 48,
@@ -466,19 +583,20 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    marginRight: spacing.m,
+  },
+  featureInfo: {
+    flex: 1,
   },
   featureTitle: {
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
     color: colors.text,
-    marginBottom: 2,
-    textAlign: 'center',
   },
   featureSubtitle: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textSecondary,
-    textAlign: 'center',
+    marginTop: 2,
   },
   widgetCard: {
     backgroundColor: colors.card,
@@ -540,7 +658,7 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   onboardingContent: {
     paddingTop: insets.top + spacing.xxl,
     paddingHorizontal: spacing.l,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xxl + insets.bottom,
   },
   onboardingHero: {
     alignItems: 'center',
@@ -642,5 +760,143 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     color: '#FFF',
     fontSize: typography.sizes.large,
     fontWeight: 'bold',
+  },
+  // AI Recommendations Styles
+  recommendationsCard: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.l,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.m,
+  },
+  loadingIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.l,
+  },
+  loadingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginHorizontal: 4,
+  },
+  // Recommended Crops Section Styles
+  cropsSection: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.l,
+    marginBottom: spacing.m,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cropsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  cropsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginLeft: spacing.m,
+    flex: 1,
+  },
+  cropsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  cropCard: {
+    width: '48%',
+    backgroundColor: colors.cardMuted || colors.background,
+    borderRadius: 16,
+    padding: spacing.m,
+    marginBottom: spacing.m,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cropIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#DCFCE7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  cropIconImage: {
+    width: 32,
+    height: 32,
+  },
+  cropName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  cropReason: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  // Tips Section Styles
+  tipsCard: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.l,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.m,
+  },
+  tipsHeader: {
+    marginBottom: spacing.m,
+  },
+  tipsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  tipsBadgeText: {
+    color: '#F59E0B',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  tipsContent: {},
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.s,
+  },
+  tipBullet: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F59E0B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+    marginTop: 2,
+  },
+  tipBulletText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  tipText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+    flex: 1,
   },
 });

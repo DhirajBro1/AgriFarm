@@ -24,7 +24,7 @@
         },
         "about": {
             "title": "About",
-            "description": "AgriFarm is developed by IT group of Radhika Secondary School which helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized recommendations.",
+            "description": "AgriFarm is developed by 3 students (Chirayu, Dhiraj, Chhabilal) which helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized recomendations .",
             "version": "Version 1.0.2"
         }
     },
@@ -265,8 +265,15 @@
     "agribot": {
         "title": "AgriBot AI",
         "welcome": "Hello! I'm AgriBot. How can I help you with your farming today?",
+        "welcomeSubtext": "Ask me about crops, pests, fertilizers, or any farming questions.",
         "inputPlaceholder": "Ask anything about farming...",
-        "typing": "AgriBot is typing..."
+        "typing": "AgriBot is typing...",
+        "suggestions": {
+            "pests": "Rice pests",
+            "fertilizer": "Tomato fertilizer",
+            "weather": "Weather tips",
+            "soil": "Soil health"
+        }
     },
     "months": {
         "baisakh": "Baisakh",

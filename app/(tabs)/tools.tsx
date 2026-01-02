@@ -323,7 +323,12 @@ export default function ToolsScreen() {
           ))}
         </ScrollView>
 
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {renderToolContent()}
         </ScrollView>
 
@@ -501,14 +506,20 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
   tabTextActive: {
     color: '#FFF',
   },
+  scrollArea: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: spacing.l,
     paddingBottom: spacing.xxl,
+    flexGrow: 1,
   },
   toolContainer: {
+    flex: 1,
     backgroundColor: colors.card,
     borderRadius: 24,
     padding: spacing.l,
+    paddingBottom: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
   },

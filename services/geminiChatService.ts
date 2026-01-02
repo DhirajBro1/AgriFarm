@@ -28,29 +28,18 @@ class GeminiChatService {
 
     private static getSystemPrompt(language: string): string {
         const isNepali = language.startsWith('ne');
-
-        if (isNepali) {
-            return `
-तपाईं "AgriBot" हुनुहुन्छ, एक विशेषज्ञ कृषि सल्लाहकार।
-तपाईंको उद्देश्य कृषकहरूलाई बालीनाली, रोग नियन्त्रण, मौसम, र खेती प्रविधिहरूको बारेमा मद्दत गर्नु हो।
-
-निर्देशनहरू:
-१. सधैं नेपाली भाषामा जवाफ दिनुहोस् (देवनागरी लिपि)।
-२. जवाफ छोटो, सरल र बुझ्न सजिलो हुनुपर्छ।
-३. कृषि बाहेकका विषयमा सोधिएमा, विनम्रतापूर्वक जानकारी दिनुहोस् कि तपाईं केवल कृषिमा मद्दत गर्न सक्नुहुन्छ।
-४. सकेसम्म बुँदागत रूपमा (bullet points) जानकारी दिनुहोस्।
-`;
-        }
+        const langName = isNepali ? 'Nepali' : 'English';
 
         return `
-You are "AgriBot", an expert agricultural advisor.
-Your goal is to help farmers with crops, disease control, weather, and farming techniques.
+You are "AgriBot", an expert agricultural advisor for farmers.
+Your goal is to provide helpful, concise, and accurate advice on crops, disease control, weather, and farming techniques.
 
 Instructions:
-1. Always answer in English (unless specifically asked otherwise).
-2. Keep answers concise, simple, and easy to understand for farmers.
-3. If asked about non-agricultural topics, politely decline and steer back to farming.
-4. Use bullet points for lists to improve readability.
+1. Primary Language: Respond primarily in ${langName}. 
+2. Flexibility: If the user asks a question in another language (like English while in Nepali mode, or vice versa), respond in the user's chosen language. Do NOT claim you cannot speak a certain language.
+3. Tone: Keep answers simple and easy to understand for farmers.
+4. Scope: If asked about non-agricultural topics, politely decline and steer back to farming.
+5. Format: Use bullet points for lists to improve readability.
 `;
     }
 
@@ -69,11 +58,15 @@ Instructions:
                 },
             });
 
-            console.log('🌱 AgriBot: Chat session started');
+            console.log(`🌱 AgriBot: Chat session started (${language})`);
         } catch (error) {
             console.error('❌ AgriBot: Failed to start chat session', error);
             throw error;
         }
+    }
+
+    static resetChat(): void {
+        this.chatSession = null;
     }
 
     static async sendMessage(message: string): Promise<string> {
@@ -82,7 +75,7 @@ Instructions:
         }
 
         try {
-            if (!this.chatSession) throw new Error("Chat session not initialized");
+            if (!this.chatSession) throw new Error("ChatSession not initialized");
 
             const result = await this.chatSession.sendMessage(message);
             const response = await result.response;
@@ -90,6 +83,36 @@ Instructions:
         } catch (error) {
             console.error('❌ AgriBot: Error sending message', error);
             return "Sorry, I'm having trouble connecting to the farm network right now. Please try again later.";
+        }
+    }
+
+    /**
+     * Generates 4 AI-driven suggestion chips for the chat interface.
+     */
+    static async getSuggestions(language: string, region: string, month: string): Promise<string[]> {
+        try {
+            const genAI = this.getGenAI();
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+            const isNepali = language.startsWith('ne');
+            const prompt = isNepali
+                ? `तपाईं एक कृषि विशेषज्ञ हुनुहुन्छ। ${region} क्षेत्रमा ${month} महिनामा कृषकहरूलाई चाहिने ४ वटा साना र व्यावहारिक प्रश्नहरू (suggestions) सुझाव दिनुहोस्। प्रश्नहरू छोटा र स्पष्ट हुनुपर्छ। उत्तर केवल ४ वटा प्रश्नहरूको सूचीको रूपमा दिनुहोस्, कुनै थप विवरण बिना।`
+                : `You are an agricultural expert. Suggest 4 short, practical questions (chips) a farmer in the ${region} region during the month of ${month} might want to ask AgriBot. Keep them very concise. Return ONLY a list of 4 questions, one per line.`;
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text().trim();
+
+            return text.split('\n')
+                .map(s => s.replace(/^\d+\.\s*/, '').replace(/^[-*]\s*/, '').trim())
+                .filter(s => s.length > 0)
+                .slice(0, 4);
+        } catch (error) {
+            console.error('❌ AgriBot: Failed to get suggestions', error);
+            const isNepali = language.startsWith('ne');
+            return isNepali
+                ? ["बाली रोगहरू", "मल प्रयोग", "सिंचाइ प्रविधि", "बजार मूल्य"]
+                : ["Crop diseases", "Fertilizer use", "Irrigation tips", "Market prices"];
         }
     }
 }

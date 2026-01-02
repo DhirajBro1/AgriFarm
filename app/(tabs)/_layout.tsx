@@ -4,16 +4,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AgriBotModal from '../../components/AgriBotModal';
-import DraggableFAB from '../../components/DraggableFAB';
 import { useTheme } from '../../theme/ThemeProvider';
 
 export default function TabLayout() {
     const { colors, typography, spacing } = useTheme();
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
-
-    const [isAgriBotVisible, setAgriBotVisible] = React.useState(false);
 
     return (
         <React.Fragment>
@@ -83,16 +79,6 @@ export default function TabLayout() {
                     }}
                 />
             </Tabs>
-
-            <DraggableFAB
-                onPress={() => setAgriBotVisible(true)}
-                backgroundColor={colors.primary}
-            />
-
-            <AgriBotModal
-                visible={isAgriBotVisible}
-                onClose={() => setAgriBotVisible(false)}
-            />
         </React.Fragment>
     );
 }

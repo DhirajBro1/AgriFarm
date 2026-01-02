@@ -451,7 +451,7 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     marginLeft: spacing.m,
   },
   backButton: { padding: spacing.s, marginLeft: -spacing.s },
-  scrollContent: { paddingBottom: spacing.xxl },
+  scrollContent: { paddingBottom: spacing.xxl + insets.bottom },
   viewfinderContainer: { paddingHorizontal: spacing.l, marginTop: spacing.s },
   placeholder: {
     aspectRatio: 1,
