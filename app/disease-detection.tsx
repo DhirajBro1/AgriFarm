@@ -2,6 +2,7 @@
  * DiseaseDetectionScreen - Merged Legacy Features + Modern UI
  * Focus: Deep Data (Images, Confidence) + Inline Info
  */
+
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";

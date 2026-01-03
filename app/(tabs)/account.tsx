@@ -63,7 +63,7 @@ export default function AccountScreen() {
 
       await AsyncStorage.setItem("username", editName);
       await AsyncStorage.setItem("region", editRegion);
-
+// commit test
       // Verify the save
       const savedName = await AsyncStorage.getItem("username");
       const savedRegion = await AsyncStorage.getItem("region");

@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import '../i18n/i18n'; // Initialize i18n
 import { ThemeProvider } from '../theme/ThemeProvider';
 
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

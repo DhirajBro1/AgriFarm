@@ -85,6 +85,7 @@ export default function ToolsScreen() {
     const cropData = csvParser.getCropInfo(selectedCrop);
     let avgYield = 2000;
 
+    
     if (cropData && cropData.yield) {
       const parts = cropData.yield.match(/(\d+)/g);
       if (parts && parts.length > 0) {
