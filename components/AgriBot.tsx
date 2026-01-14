@@ -8,10 +8,10 @@ import {
     KeyboardAvoidingView,
     Modal,
     Platform,
-    Pressable,
+    Pressable, 
     ScrollView,
     StyleSheet,
-    Text,
+    Text, 
     TextInput,
     TouchableOpacity,
     View,
@@ -19,14 +19,13 @@ import {
 import { PanGestureHandler, PanGestureHandlerGestureEvent, PanGestureHandlerStateChangeEvent, State } from 'react-native-gesture-handler';
 import Animated, {
     FadeInDown,
-    FadeOut,
     useAnimatedStyle,
     useSharedValue,
     withDelay,
     withRepeat,
     withSequence,
     withSpring,
-    withTiming,
+    withTiming
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GeminiChatService, { ChatMessage } from '../services/geminiChatService';
@@ -252,8 +251,8 @@ export default function AgriBot() {
             >
                 <KeyboardAvoidingView
                     style={styles.chatOverlay}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    keyboardVerticalOffset={0}
                 >
                     <Pressable
                         style={StyleSheet.absoluteFill}
@@ -645,7 +644,8 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
         backgroundColor: colors.card,
         borderTopWidth: 1,
         borderTopColor: colors.border,
-        paddingBottom: Math.max(insets.bottom, 20),
+        paddingTop: 12,
+        paddingBottom: Math.max(insets.bottom, 16),
     },
     suggestionsWrapper: {
         marginBottom: 8,
@@ -681,11 +681,11 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     },
     inputWrapper: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         borderRadius: 28,
         borderWidth: 1,
         paddingHorizontal: 8,
-        paddingVertical: 8,
+        paddingVertical: 6,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowRadius: 8,
@@ -695,8 +695,9 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
         flex: 1,
         maxHeight: 120,
         paddingHorizontal: 16,
-        paddingVertical: 10,
+        paddingVertical: 8,
         fontSize: 16,
+        textAlignVertical: 'center',
     },
     sendButton: {
         width: 44,

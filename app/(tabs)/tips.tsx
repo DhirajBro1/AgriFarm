@@ -64,11 +64,11 @@ export default function TipsScreen() {
           >
             <View style={styles.cardHeader}>
               <View style={styles.iconBox}>
-                <Ionicons name="bulb" size={24} color="#F59E0B" />
+                <Ionicons name="bulb" size={24} color="#F59E0B" /> 
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.tipTitle}>{tip.title}</Text>
-                <Text style={styles.tipCategory}>{tip.category}</Text>
+                <Text style={styles.tipTitle}>{t(`tips.items.${tip.id}.title`)}</Text>
+                <Text style={styles.tipCategory}>{t(`tips.categories.${tip.category}`)}</Text>
               </View>
               <View style={[
                 styles.arrowBox,
@@ -84,7 +84,7 @@ export default function TipsScreen() {
 
             {expandedTip === tip.id && (
               <View style={styles.cardBody}>
-                <Text style={styles.description}>{tip.description}</Text>
+                <Text style={styles.description}>{t(`tips.items.${tip.id}.description`)}</Text>
                 {tip.season && (
                   <View style={styles.tag}>
                     <Text style={styles.tagText}>{t('tips.bestFor')} {tip.season}</Text>

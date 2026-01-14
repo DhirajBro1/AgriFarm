@@ -5,11 +5,12 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Link, useRouter } from "expo-router";
+import { Link, useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
+  Image,
   Modal,
   RefreshControl,
   ScrollView,
@@ -21,12 +22,11 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AgriBot from "../../components/AgriBot";
+import GeminiDiseaseService from "../../services/geminiDiseaseService";
 import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser, { CropData } from "../../utils/csvParser";
 import { getCurrentNepaliMonth, REGIONS, RegionType } from "../../utils/farmingData";
-import AgriBot from "../../components/AgriBot";
-import GeminiDiseaseService from "../../services/geminiDiseaseService";
-import { Image } from "react-native";
 
 
 export default function HomeScreen() {
@@ -39,6 +39,7 @@ export default function HomeScreen() {
 
   const [username, setUsername] = useState("Farmer");
   const [seasonalCrops, setSeasonalCrops] = useState<CropData[]>([]);
+  const [activeRegion, setActiveRegion] = useState<string>("");
   const currentMonth = useMemo(() => getCurrentNepaliMonth(), []);
 
   // Onboarding Modal State
@@ -52,6 +53,22 @@ export default function HomeScreen() {
     tips: string[];
   } | null>(null);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      checkRegionUpdate();
+    }, [activeRegion])
+  );
+
+  const checkRegionUpdate = async () => {
+    const stored = await AsyncStorage.getItem("region");
+    if (stored && stored !== activeRegion) {
+      // Region changed! Reload everything
+      setActiveRegion(stored);
+      loadData();
+      loadRecommendations();
+    }
+  };
 
   useEffect(() => {
     checkFirstTime();
@@ -94,6 +111,11 @@ export default function HomeScreen() {
     // Load Seasonal Crops from local CSV
     try {
       const parser = CSVParser.getInstance();
+
+      // Sync language with i18n
+      const lang = i18n.language.startsWith('ne') ? 'ne' : 'en';
+      parser.setLanguage(lang);
+
       await parser.initialize();
 
       const region = (await AsyncStorage.getItem("region")) as 'high' | 'mid' | 'terai' || 'mid';

@@ -5,6 +5,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +31,7 @@ type RegionType = 'high' | 'mid' | 'terai';
 export default function CropsScreen() {
   const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
 
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
@@ -44,10 +45,16 @@ export default function CropsScreen() {
   const [expandedCrop, setExpandedCrop] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserRegion();
+    }, [])
+  );
+
   useEffect(() => {
     loadUserRegion();
     loadData();
-  }, [activeTab, selectedMonth, region]);
+  }, [activeTab, selectedMonth, region, i18n.language]);
 
   const loadUserRegion = async () => {
     const r = await AsyncStorage.getItem("region");
@@ -55,6 +62,10 @@ export default function CropsScreen() {
   };
 
   const loadData = async () => {
+    // Sync language with i18n
+    const lang = i18n.language.startsWith('ne') ? 'ne' : 'en';
+    csvParser.setLanguage(lang);
+
     await csvParser.initialize();
 
     if (activeTab === 'calendar') {

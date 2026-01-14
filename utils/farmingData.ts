@@ -15,8 +15,6 @@
  */
 export interface FarmingTip {
   id: string; // Unique identifier for the tip
-  title: string; // Short, descriptive title
-  description: string; // Detailed explanation of the tip
   category: "watering" | "fertilizer" | "planting" | "harvesting" | "general"; // Tip category
   season?: string; // Optional season when tip is most relevant
   important: boolean; // Whether this is a critical/high-priority tip
@@ -55,82 +53,77 @@ export interface LocalUnit {
 export const FARMING_TIPS: FarmingTip[] = [
   {
     id: "tip_001",
-    title: "Avoid Fertilizer Before Rain",
-    description:
-      "Never apply fertilizer just before heavy rain as it will wash away nutrients and waste money.",
     category: "fertilizer",
     important: true,
   },
   {
     id: "tip_002",
-    title: "Best Irrigation Time",
-    description:
-      "Water plants early morning (6-8 AM) or evening (5-7 PM) to reduce water loss through evaporation.",
     category: "watering",
     important: true,
   },
   {
     id: "tip_003",
-    title: "Seed Storage",
-    description:
-      "Store seeds in dry, cool place in airtight containers to maintain viability for next season.",
     category: "general",
     important: false,
   },
   {
     id: "tip_004",
-    title: "Companion Planting",
-    description:
-      "Plant marigolds with tomatoes and peppers to naturally repel harmful insects.",
     category: "planting",
     important: false,
   },
   {
     id: "tip_005",
-    title: "Soil Testing",
-    description:
-      "Test soil pH every season. Most vegetables prefer slightly acidic to neutral soil (pH 6.0-7.0).",
     category: "general",
     important: true,
   },
   {
     id: "tip_006",
-    title: "Harvest Morning",
-    description:
-      "Harvest vegetables early morning when they are crisp and full of moisture.",
     category: "harvesting",
     important: false,
   },
   {
     id: "tip_007",
-    title: "Organic Compost",
-    description:
-      "Use kitchen scraps and farm waste to make organic compost. It improves soil structure and fertility.",
     category: "fertilizer",
     important: true,
   },
   {
     id: "tip_008",
-    title: "Crop Rotation",
-    description:
-      "Rotate crops each season to prevent soil depletion and reduce pest and disease buildup.",
     category: "planting",
     important: true,
   },
   {
     id: "tip_009",
-    title: "Mulching Benefits",
-    description:
-      "Use organic mulch around plants to retain moisture, suppress weeds, and improve soil.",
     category: "general",
     important: false,
   },
   {
     id: "tip_010",
-    title: "Weather Awareness",
-    description:
-      "Check weather forecast before planting or applying treatments. Timing is crucial for success.",
     category: "general",
+    important: true,
+  },
+  {
+    id: "tip_011",
+    category: "watering",
+    important: false,
+  },
+  {
+    id: "tip_012",
+    category: "general",
+    important: true,
+  },
+  {
+    id: "tip_013",
+    category: "general",
+    important: false,
+  },
+  {
+    id: "tip_014",
+    category: "planting",
+    important: false,
+  },
+  {
+    id: "tip_015",
+    category: "harvesting",
     important: true,
   },
 ];

@@ -11,6 +11,8 @@
 
 **AgriFarm** is a comprehensive mobile application designed specifically for Nepali farmers, providing intelligent crop recommendations, farming tools, and agricultural guidance tailored to Nepal's diverse geographic regions. The app combines traditional farming knowledge with modern technology to help farmers make informed decisions about their crops.
 
+## NEED TO UPDATE README LOL
+
 ### 🎯 Key Features
 
 #### 🏠 **Dashboard & User Setup**
