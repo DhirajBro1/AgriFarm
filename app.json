@@ -15,6 +15,9 @@
     "scheme": "agrifarm",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dhirajbro1.agrifarm"
