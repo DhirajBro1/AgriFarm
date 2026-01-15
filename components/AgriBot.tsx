@@ -8,10 +8,10 @@ import {
     KeyboardAvoidingView,
     Modal,
     Platform,
-    Pressable, 
+    Pressable,
     ScrollView,
     StyleSheet,
-    Text, 
+    Text,
     TextInput,
     TouchableOpacity,
     View,
@@ -252,7 +252,6 @@ export default function AgriBot() {
                 <KeyboardAvoidingView
                     style={styles.chatOverlay}
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    keyboardVerticalOffset={0}
                 >
                     <Pressable
                         style={StyleSheet.absoluteFill}

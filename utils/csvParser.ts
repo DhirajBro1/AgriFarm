@@ -105,16 +105,16 @@ const agricLimeEN = require('../data/07_agricultural_lime_requirements.csv');
 const optimalPHEN = require('../data/08_optimal_soil_ph_for_crops.csv');
 
 // Import Nepali CSV files
-const cropCalendarNE = require('../data/बाली_पात्रो.csv');
-const chemicalFertilizersNE = require('../data/रासायनिक_मल.csv');
-const riceFertilizerNE = require('../data/धान_मल_आवश्यकता.csv');
-const maizeFertilizerNE = require('../data/मकै_मल_आवश्यकता.csv');
-const wheatFertilizerNE = require('../data/गहुँ_मल_आवश्यकता.csv');
-const otherCropsFertilizerNE = require('../data/अन्य_बाली_मल.csv');
-const fruitTreesFertilizerNE = require('../data/फलफूल_रुख_मल.csv');
-const agricLimeNE = require('../data/कृषि_चुन_आवश्यकता.csv');
-const optimalPHNE = require('../data/उपयुक्त_माटो_pH_बाली.csv');
-const vegPHNE = require('../data/तरकारीको_उपयुक्त_pH_दायरा.csv');
+const cropCalendarNE = require('../data/ne_crop_calendar.csv');
+const chemicalFertilizersNE = require('../data/ne_chemical_fertilizers.csv');
+const riceFertilizerNE = require('../data/ne_rice_fertilizer.csv');
+const maizeFertilizerNE = require('../data/ne_maize_fertilizer.csv');
+const wheatFertilizerNE = require('../data/ne_wheat_fertilizer.csv');
+const otherCropsFertilizerNE = require('../data/ne_other_crops_fertilizer.csv');
+const fruitTreesFertilizerNE = require('../data/ne_fruit_trees_fertilizer.csv');
+const agricLimeNE = require('../data/ne_agric_lime.csv');
+const optimalPHNE = require('../data/ne_optimal_ph.csv');
+const vegPHNE = require('../data/ne_veg_ph.csv');
 
 // Data Interfaces
 export interface CropCalendarData {
