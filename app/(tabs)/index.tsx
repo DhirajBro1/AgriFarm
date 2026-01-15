@@ -151,7 +151,17 @@ export default function HomeScreen() {
     if (name.includes('onion')) return require('../../assets/images/crops/onion.png');
     if (name.includes('lentil') || name.includes('dal')) return require('../../assets/images/crops/lentil.png');
     if (name.includes('mustard')) return require('../../assets/images/crops/mustard.png');
-    return require('../../assets/images/crops/wheat.png');
+    if (name.includes('sunflower')) return require('../../assets/images/crops/sunflower.png');
+    if (name.includes('brinjal')) return require('../../assets/images/crops/brinjal.png');
+    if (name.includes('chilli')) return require('../../assets/images/crops/chilli.png');
+    if (name.includes('cucurbits')) return require('../../assets/images/crops/cucurbits.png');
+    if (name.includes('garlic')) return require('../../assets/images/crops/garlic.png');
+    if (name.includes('lady')) return require('../../assets/images/crops/lady.png');
+    if (name.includes('okra')) return require('../../assets/images/crops/okra.png');
+    if (name.includes('bottle')) return require('../../assets/images/crops/bottle_gourd.png');
+    if (name.includes('chickpea')) return require('../../assets/images/crops/chickpeas.png');
+   
+    return require('../../assets/images/icon.png');
   };
 
   const features = [
