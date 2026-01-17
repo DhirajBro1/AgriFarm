@@ -160,8 +160,8 @@ export default function HomeScreen() {
     if (name.includes('okra')) return require('../../assets/images/crops/okra.png');
     if (name.includes('bottle')) return require('../../assets/images/crops/bottle_gourd.png');
     if (name.includes('chickpea')) return require('../../assets/images/crops/chickpeas.png');
-   
-    return require('../../assets/images/icon.png');
+    
+    return require('../../assets/images/favicon.png');
   };
 
   const features = [
