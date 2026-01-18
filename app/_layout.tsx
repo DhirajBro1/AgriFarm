@@ -10,7 +10,7 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 SplashScreen.preventAutoHideAsync().catch(() => {
   /* reloading the app might trigger some race conditions, ignore them */
 });
-
+  
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

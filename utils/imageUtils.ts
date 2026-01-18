@@ -16,6 +16,7 @@ interface ProcessedImage {
   base64?: string;
 }
 
+
 /**
  * Utility class for image processing and conversion for PlantNet API
  */

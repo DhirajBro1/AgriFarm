@@ -9,6 +9,7 @@
  * - Helper functions for farming calculations
  */
 
+
 /**
  * Interface for farming tips and advice
  * Contains practical farming guidance for Nepali farmers

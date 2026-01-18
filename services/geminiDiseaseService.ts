@@ -7,6 +7,7 @@ export interface DiseaseSolution {
   summary: string;
 }
 
+
 class GeminiDiseaseService {
   private static readonly API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
   private static genAI: GoogleGenerativeAI | null = null;
