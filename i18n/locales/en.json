@@ -26,7 +26,7 @@
         "about": {
             "title": "About",
             "description": "AgriFarm is developed by 3 students (Chirayu, Dhiraj, Chhabilal) which helps Nepali farmers plan their crops based on their province and the current Nepali month. Get personalized recomendations .",
-            "version": "Version 1.0.2.1"
+            "version": "Version 1.0.2.0.0"
         }
     },
     "regions": {
@@ -189,7 +189,69 @@
             "planting": "Planting",
             "harvesting": "Harvesting"
         },
-        "bestFor": "Best for:"
+        "bestFor": "Best for:",
+        "items": {
+            "tip_001": {
+                "title": "Avoid Fertilizer Before Rain",
+                "description": "Never apply fertilizer just before heavy rain as it will wash away nutrients and waste money."
+            },
+            "tip_002": {
+                "title": "Best Irrigation Time",
+                "description": "Water plants early morning (6-8 AM) or evening (5-7 PM) to reduce water loss through evaporation."
+            },
+            "tip_003": {
+                "title": "Seed Storage",
+                "description": "Store seeds in dry, cool place in airtight containers to maintain viability for next season."
+            },
+            "tip_004": {
+                "title": "Companion Planting",
+                "description": "Plant marigolds with tomatoes and peppers to naturally repel harmful insects."
+            },
+            "tip_005": {
+                "title": "Soil Testing",
+                "description": "Test soil pH every season. Most vegetables prefer slightly acidic to neutral soil (pH 6.0-7.0)."
+            },
+            "tip_006": {
+                "title": "Harvest Morning",
+                "description": "Harvest vegetables early morning when they are crisp and full of moisture."
+            },
+            "tip_007": {
+                "title": "Organic Compost",
+                "description": "Use kitchen scraps and farm waste to make organic compost. It improves soil structure and fertility."
+            },
+            "tip_008": {
+                "title": "Crop Rotation",
+                "description": "Rotate crops each season to prevent soil depletion and reduce pest and disease buildup."
+            },
+            "tip_009": {
+                "title": "Mulching Benefits",
+                "description": "Use organic mulch around plants to retain moisture, suppress weeds, and improve soil."
+            },
+            "tip_010": {
+                "title": "Weather Awareness",
+                "description": "Check weather forecast before planting or applying treatments. Timing is crucial for success."
+            },
+            "tip_011": {
+                "title": "Drip Irrigation",
+                "description": "Install drip irrigation systems to save water and deliver moisture directly to plant roots."
+            },
+            "tip_012": {
+                "title": "Pest Monitoring",
+                "description": "Regularly check under leaves for early signs of pests to prevent major infestations."
+            },
+            "tip_013": {
+                "title": "Proper Tool Care",
+                "description": "Clean and sharpen your tools regularly to prevent the spread of diseases and make work easier."
+            },
+            "tip_014": {
+                "title": "Cover Crops",
+                "description": "Plant cover crops like clover during off-seasons to improve soil health and prevent erosion."
+            },
+            "tip_015": {
+                "title": "Post-Harvest Handling",
+                "description": "Store harvested crops in shaded, well-ventilated areas to maintain freshness and market value."
+            }
+        }
     },
     "tools": {
         "title": "Tools",
