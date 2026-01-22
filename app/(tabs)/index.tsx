@@ -141,6 +141,8 @@ export default function HomeScreen() {
 
   const getCropIcon = (cropName: string) => {
     const name = cropName.toLowerCase();
+if (name.includes('barley')) return require('../../assets/images/crops/wheat.png');
+    
     if (name.includes('wheat')) return require('../../assets/images/crops/wheat.png');
     if (name.includes('rice')) return require('../../assets/images/crops/rice.png');
     if (name.includes('corn') || name.includes('maize')) return require('../../assets/images/crops/corn.png');
@@ -160,6 +162,9 @@ export default function HomeScreen() {
     if (name.includes('okra')) return require('../../assets/images/crops/okra.png');
     if (name.includes('bottle')) return require('../../assets/images/crops/bottle_gourd.png');
     if (name.includes('chickpea')) return require('../../assets/images/crops/chickpeas.png');
+    if (name.includes('peas')) return require('../../assets/images/crops/peas.png');
+    if (name.includes('sugarcane')) return require('../../assets/images/crops/sugarcane.png');
+    if (name.includes('mungbean')) return require('../../assets/images/crops/mung.png');
     
     return require('../../assets/images/favicon.png');
   };
