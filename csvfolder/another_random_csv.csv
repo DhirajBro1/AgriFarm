@@ -1,0 +1,50 @@
+crop_name,variety,regions,n_kg,p_kg,k_kg,compost_kg,soil_ph_min,soil_ph_max,maturity_days_min,maturity_days_max,yield_min_kg,yield_max_kg,planting_months,remarks
+Potato,Kufri Jyoti,"High Hill|Mid Hill|Terai",120,80,60,15000,5.0,7.0,90,110,2500,3500,"Sep–Dec","NULL"
+Potato,Janak Dev,"High Hill|Mid Hill|Terai",120,80,60,15000,5.0,7.0,90,110,2500,3500,"Sep–Dec","Adapted to Nepal agroecology"
+Potato,Khumbu,"High Hill|Mid Hill",120,80,60,15000,5.0,7.0,90,110,2500,3500,"Sep–Dec",NULL
+Potato,IPY,"Mid Hill|Terai",120,80,60,15000,5.0,7.0,90,110,2500,3500,"Sep–Dec","ateL blight "
+Potato,Cardinal,"Terai",120,80,60,15000,5.0,7.0,90,100,2500,3500,"Sep–Dec","Early; red skin"
+
+Sweet Potato,Local,"High Hill|Mid Hill|Terai",40,30,30,15000,5.5,7.0,120,150,1500,2500,"Apr–Jul",NULL
+Sweet Potato,H-41,"Terai",40,30,30,15000,5.5,7.0,120,150,1500,2500,"Apr–Jul","High production"
+
+Yam,Local,"High Hill|Mid Hill|Terai",0,0,0,15000,5.5,7.0,240,300,1500,2500,"Mar–May","Use seed tubers"
+Taro,Local,"High Hill|Mid Hill|Terai",0,0,0,15000,5.5,7.0,180,240,1500,2500,"Monsoon months","Use seed tubers"
+Elephant Foot Yam,Local,"High Hill|Mid Hill|Terai",0,0,0,15000,5.5,7.0,240,300,2000,3000,"Mar–May","Use seed tubers"
+
+Turmeric,Local,"High Hill|Mid Hill|Terai",60,30,50,15000,6.0,7.0,240,300,1500,2000,"Apr–Jun","Use seed rhizomes"
+Turmeric,Bandi,"Mid Hill|Terai",60,30,50,15000,6.0,7.0,240,300,1500,2000,"Apr–Jun",NULL
+
+Ginger,Local,"High Hill|Mid Hill|Terai",60,30,50,15000,6.0,7.0,240,300,1500,2000,"Feb–May","Use seed rhizomes"
+Ginger,Bandi,"Mid Hill|Terai",60,30,50,15000,6.0,7.0,240,300,1500,2000,"Feb–May",NULL
+
+Carrot,Pusa Kesar,"Mid Hill|Terai",30,40,30,10000,6.0,7.0,90,120,1500,2500,"Sep–Dec",NULL
+Carrot,Nantes,"Mid Hill|Terai",30,40,30,10000,6.0,7.0,90,120,1500,2500,"Sep–Dec",NULL
+
+Radish,Kathmandu Local,"High Hill|Mid Hill|Terai",40,60,30,10000,6.0,7.4,60,90,1000,2000,"Sep–Dec",NULL
+Radish,All Season,"Mid Hill|Terai",40,60,30,10000,6.0,7.4,60,90,1000,2000,"Sep–Dec",NULL
+Radish,Forty Day,"Terai",40,60,30,10000,6.0,7.4,60,90,1000,2000,"Sep–Dec",NULL
+
+Cabbage,Green Coronet,"High Hill|Mid Hill|Terai",80,60,40,15000,6.5,7.5,70,90,2000,3000,"Sep–Nov",NULL
+Cabbage,Copenhagen,"Mid Hill|Terai",80,60,40,15000,6.5,7.5,70,90,2000,3000,"Sep–Nov",NULL
+Cabbage,NS 43,"Terai",80,60,40,15000,6.5,7.5,60,80,2000,3000,"Sep–Nov",NULL
+
+Cauliflower,Snow King,"High Hill|Mid Hill|Terai",80,60,40,15000,6.0,7.0,70,90,1800,2800,"Jul–Oct",NULL
+Cauliflower,Patna Snow Ball,"Terai",80,60,40,15000,6.0,7.0,70,90,1800,2800,"Jul–Oct",NULL
+
+Broccoli,Green Sprouting,"High Hill|Mid Hill|Terai",80,60,40,15000,6.0,7.0,80,100,1800,2800,"Aug–Oct",NULL
+
+Garlic,Local,"High Hill|Mid Hill|Terai",120,120,40,15000,6.0,7.0,120,150,2000,2500,"Sep–Dec",NULL
+
+Bottle Gourd,"NS 421|Kaveri|NS 443","High Hill|Mid Hill",20,10,10,15000,6.0,7.5,80,100,1500,2500,"Nov–Mar",NULL
+
+Turnip,Purple Top,"High Hill|Mid Hill|Terai",40,60,30,10000,6.0,7.0,60,80,1200,2000,"Sep–Dec",NULL
+Turnip,Fuyunasho,"Mid Hill|Terai",40,60,30,10000,6.0,7.0,60,80,1200,2000,"Sep–Dec",NULL
+Turnip,Kathmandu Red,"Mid Hill",40,60,30,10000,6.0,7.0,60,80,1200,2000,"Sep–Dec",NULL
+
+French Bean,Khrishuli,"High Hill|Mid Hill",40,60,30,6000,6.0,7.0,60,80,1200,2000,"Mar–Jun",NULL
+Pole Bean,Local,"Mid Hill|Terai",40,60,30,6000,6.0,7.0,60,80,1200,2000,"Mar–Jun",NULL
+Brown French Bean,Local,"Mid Hill|Terai",40,60,30,6000,6.0,7.0,60,80,1200,2000,"Mar–Jun",NULL
+
+Cardamom,Ramshahi,"High Hill|Mid Hill",50,30,30,25000,5.5,6.5,1095,1095,30,40,"Apr–May","3 seedlings per pit"
+Cardamom,Golshahi,"High Hill|Mid Hill",50,30,30,25000,5.5,6.5,1095,1095,30,40,"Apr–May","3 seedlings per pit"
