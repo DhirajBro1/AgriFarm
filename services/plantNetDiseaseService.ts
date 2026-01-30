@@ -354,6 +354,7 @@ class PlantNetDiseaseService {
     }
   }
 
+  
 
   /**
    * Identifies diseases from base64 image data

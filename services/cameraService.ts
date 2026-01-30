@@ -33,6 +33,7 @@ class CameraService {
     }
   }
 
+  
   static async takePicture(options: CameraOptions = {}): Promise<CameraResult> {
     const hasPermission = await this.requestPermissions();
 

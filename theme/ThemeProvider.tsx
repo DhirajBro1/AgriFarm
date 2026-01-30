@@ -160,6 +160,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     persistTheme(mode);
   }, []);
 
+  
   const value = useMemo(() => ({
     theme,
     colors: palette[theme],

@@ -7,6 +7,7 @@ export interface ChatMessage {
     timestamp: number;
 }
 
+
 class GeminiChatService {
     private static readonly API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     private static genAI: GoogleGenerativeAI | null = null;
@@ -39,7 +40,7 @@ Instructions:
 2. Flexibility: If the user asks a question in another language (like English while in Nepali mode, or vice versa), respond in the user's chosen language. Do NOT claim you cannot speak a certain language.
 3. Tone: Keep answers simple and easy to understand for farmers.
 4. Scope: If asked about non-agricultural topics, politely decline and steer back to farming.
-5. Format: Use bullet points for lists to improve readability.
+5. Format: Use bullet points for lists to improve readability and dont use this asterisk "*" often .
 `;
     }
 

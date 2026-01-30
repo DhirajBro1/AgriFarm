@@ -3,6 +3,7 @@
  * Focus: Categorized Tips with Filter Pill Navigation
  */
 
+
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";

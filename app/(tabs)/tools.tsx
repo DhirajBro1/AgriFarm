@@ -106,11 +106,13 @@ export default function ToolsScreen() {
     if (!cropData) return;
 
     let avgYield = 2000;
-    if (cropData.yield) {
-      const nums = cropData.yield.match(/(\d+(\.\d+)?)/g);
-      if (nums && nums.length > 0) {
-        const min = parseFloat(nums[0]);
-        const max = nums.length > 1 ? parseFloat(nums[1]) : min;
+
+    
+    if (cropData && cropData.yield) {
+      const parts = cropData.yield.match(/(\d+)/g);
+      if (parts && parts.length > 0) {
+        const min = parseInt(parts[0]);
+        const max = parts.length > 1 ? parseInt(parts[1]) : min;
         avgYield = (min + max) / 2;
       }
     }

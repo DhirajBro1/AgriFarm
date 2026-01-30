@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+
 import en from './locales/en.json';
 import ne from './locales/ne.json';
 
