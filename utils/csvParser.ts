@@ -1,18 +1,17 @@
+
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 
-/**
- * Interface for optimal soil pH data
- */
-export interface OptimalPHData {
-  cropCategory: string;
-  cropName: string;
-  optimalPHRange: string;
-}
+// Consolidated Assets
+const csvAssetsEN = {
+  cropCalendar: require('../data/crops.csv'),
+};
 
-/**
- * Legacy CropData interface for backward compatibility
- */
+const csvAssetsNE = {
+  cropCalendar: require('../data/ne_crops.csv'),
+};
+
+// Data Interfaces
 export interface CropData {
   crop: string;
   variety: string;
@@ -24,22 +23,69 @@ export interface CropData {
   nitrogen: number;
   phosphorus: number;
   potassium: number;
-  plantSpacing: number;
-  rowSpacing: number;
-  seedRate: string;
+  urea?: number;
+  dap?: number;
+  mop?: number;
+  plantSpacing: number; // 0 if missing
+  rowSpacing: number;   // 0 if missing
+  seedRate: string;     // Empty if missing
   maturityDays: string;
   yield: string;
   remarks: string;
+  phRange?: string;
 }
 
-/**
- * Legacy PHData interface for backward compatibility
- */
-export interface PHData {
-  vegetable: string;
-  optimalPHRange: string;
-  categoryPreference: string;
+export interface CropCalendarData {
+  region: string;
+  cropEnglish: string;
+  cropNepali: string;
+  varieties: string;
+  spacing: string;
+  seedRate: string;
+  ph?: string;
+  maturity?: string;
+  yield?: string;
+  n?: number;
+  p?: number;
+  k?: number;
+  compost?: number;
+  urea?: number;
+  dap?: number;
+  mop?: number;
+  intercrop?: string;
+  rotationCycle?: string;
+  characteristics?: string;
+  adaptation?: string;
+  plantingMonths?: string;
+  remarks?: string;
+
+  // New Generic fields
+  regionsRaw?: string;
 }
+
+const REGION_MAP_EN_TO_NE: { [key: string]: string } = {
+  high: 'उच्च पहाड',
+  mid: 'मध्य पहाड',
+  terai: 'तराई'
+};
+
+const MONTH_MAP_NE_TO_EN: { [key: string]: string } = {
+  'वैशाख': 'Baisakh', 'जेठ': 'Jestha', 'असार': 'Ashar', 'साउन': 'Shrawan',
+  'भदौ': 'Bhadra', 'असोज': 'Ashwin', 'कात्तिक': 'Kartik', 'मंसिर': 'Mangsir',
+  'पुस': 'Poush', 'माघ': 'Magh', 'फागुन': 'Falgun', 'चैत': 'Chaitra'
+};
+
+// Gregorian months for fallback parsing of new CSVs
+const GREGORIAN_MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const NEPALI_MONTH_INDICES: { [key: string]: number } = {
+  'वैशाख': 0, 'जेठ': 1, 'असार': 2, 'साउन': 3, 'भदौ': 4, 'असोज': 5,
+  'कात्तिक': 6, 'मंसिर': 7, 'पुस': 8, 'माघ': 9, 'फागुन': 10, 'चैत': 11,
+  'Baisakh': 0, 'Jestha': 1, 'Ashar': 2, 'Shrawan': 3, 'Bhadra': 4, 'Ashwin': 5,
+  'Kartik': 6, 'Mangsir': 7, 'Poush': 8, 'Magh': 9, 'Falgun': 10, 'Chaitra': 11
+};
+
+const NE_NUMS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+const EN_NUMS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 /**
  * Helper to load CSV string from asset module
@@ -56,11 +102,14 @@ async function loadCSVAsset(module: any): Promise<string> {
  * Helper to parse CSV string into array of objects
  */
 function parseCSV(csvString: string): any[] {
-  const lines = csvString.split(/\r?\n/).filter((line) => line.trim() !== '');
+  // Normalize line endings and handle BOM
+  const sanitizedCsv = csvString.replace(/^\ufeff/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = sanitizedCsv.split('\n').filter((line) => line.trim() !== '');
+
   if (lines.length === 0) return [];
 
-  // Handle BOM and trim headers
-  const headers = lines[0].split(',').map((h) => h.trim().replace(/^\ufeff/, ''));
+  // Parse headers
+  const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''));
   const data: any[] = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -69,7 +118,6 @@ function parseCSV(csvString: string): any[] {
     let currentVal = '';
     let insideQuotes = false;
 
-    // Handle quoted values containing commas
     for (let char of currentLine) {
       if (char === '"') {
         insideQuotes = !insideQuotes;
@@ -82,126 +130,23 @@ function parseCSV(csvString: string): any[] {
     }
     values.push(currentVal.trim().replace(/^"|"$/g, ''));
 
-    if (values.length === headers.length) {
-      const obj: any = {};
-      headers.forEach((header, index) => {
-        obj[header] = values[index];
-      });
-      data.push(obj);
-    }
+    const obj: any = {};
+    headers.forEach((header, index) => {
+      obj[header] = values[index] || '';
+    });
+    data.push(obj);
   }
   return data;
 }
 
-// Import English CSV files
-const cropCalendarEN = require('../data/nepal_crop_calendar.csv');
-const chemicalFertilizersEN = require('../data/01_chemical_fertilizers.csv');
-const riceFertilizerEN = require('../data/02_rice_fertilizer_requirements.csv');
-const maizeFertilizerEN = require('../data/03_maize_fertilizer_requirements.csv');
-const wheatFertilizerEN = require('../data/04_wheat_fertilizer_requirements.csv');
-const otherCropsFertilizerEN = require('../data/05_other_crops_fertilizer.csv');
-const fruitTreesFertilizerEN = require('../data/06_fruit_trees_fertilizer.csv');
-const agricLimeEN = require('../data/07_agricultural_lime_requirements.csv');
-const optimalPHEN = require('../data/08_optimal_soil_ph_for_crops.csv');
-
-// Import Nepali CSV files
-const cropCalendarNE = require('../data/ne_crop_calendar.csv');
-const chemicalFertilizersNE = require('../data/ne_chemical_fertilizers.csv');
-const riceFertilizerNE = require('../data/ne_rice_fertilizer.csv');
-const maizeFertilizerNE = require('../data/ne_maize_fertilizer.csv');
-const wheatFertilizerNE = require('../data/ne_wheat_fertilizer.csv');
-const otherCropsFertilizerNE = require('../data/ne_other_crops_fertilizer.csv');
-const fruitTreesFertilizerNE = require('../data/ne_fruit_trees_fertilizer.csv');
-const agricLimeNE = require('../data/ne_agric_lime.csv');
-const optimalPHNE = require('../data/ne_optimal_ph.csv');
-const vegPHNE = require('../data/ne_veg_ph.csv');
-
-// Data Interfaces
-export interface CropCalendarData {
-  cropEnglish: string;
-  cropNepali: string;
-  varieties: string;
-  spacing: string;
-  seedRate: string;
-  intercrop?: string;
-  rotationCycle?: string;
-  cropCharacteristics?: string;
-  climateAdaptation?: string;
-  region?: string; // For Nepali data: उच्च पहाड, मध्य पहाड, तराई
-  plantingMonths?: string;
-}
-
-export interface ChemicalFertilizerData {
-  fertilizerName: string;
-  n: string;
-  p: string;
-  k: string;
-  zinc: string;
-  sulphur: string;
-}
-
-export interface RegionalFertilizerData {
-  crop: string;
-  region: string;
-  varietyType?: string; // For maize (Open/Hybrid)
-  compost: string;
-  urea: string;
-  dap: string;
-  mop: string;
-  zinc?: string;
-  boron?: string;
-}
-
-export interface AgriculturalLimeData {
-  soilPH: string;
-  regions: {
-    terai: string;
-    midHills: string;
-    highHills: string;
-  };
-}
-
-// Helper Maps
-const REGION_MAP_EN_TO_NE: { [key: string]: string } = {
-  high: 'उच्च पहाड',
-  mid: 'मध्य पहाड',
-  terai: 'तराई'
-};
-
-const MONTH_MAP_EN_TO_NE: { [key: string]: string } = {
-  'Baisakh': 'वैशाख',
-  'Jestha': 'जेठ',
-  'Ashar': 'असार',
-  'Shrawan': 'साउन',
-  'Bhadra': 'भदौ',
-  'Ashwin': 'असोज',
-  'Kartik': 'कात्तिक',
-  'Mangsir': 'मंसिर',
-  'Poush': 'पुस',
-  'Magh': 'माघ',
-  'Falgun': 'फागुन',
-  'Chaitra': 'चैत'
-};
-
-const NEPALI_MONTH_INDICES: { [key: string]: number } = {
-  'वैशाख': 0, 'जेठ': 1, 'असार': 2, 'साउन': 3, 'भदौ': 4, 'असोज': 5,
-  'कात्तिक': 6, 'मंसिर': 7, 'पुस': 8, 'माघ': 9, 'फागुन': 10, 'चैत': 11
-};
-
 class CSVParser {
   private static instance: CSVParser;
-
-  // Data storage
-  private cropCalendarDataEN: CropCalendarData[] = [];
-  private cropCalendarDataNE: CropCalendarData[] = []; // Master data source for regions
-
-  private chemicalFertilizersData: ChemicalFertilizerData[] = [];
-  private regionalFertilizerData: RegionalFertilizerData[] = [];
-  private limeData: AgriculturalLimeData[] = [];
-  private optimalPHData: OptimalPHData[] = [];
-
   private isInitialized = false;
   private currentLanguage: 'en' | 'ne' = 'en';
+
+  // Data storage
+  private cropCalendarEN: CropCalendarData[] = [];
+  private cropCalendarNE: CropCalendarData[] = [];
 
   private constructor() { }
 
@@ -216,402 +161,242 @@ class CSVParser {
     this.currentLanguage = lang;
   }
 
-  // Helper constants
-  private readonly HA_TO_ROPANI_FACTOR = 0.050872; // Conversion factor for kg/ha to kg/ropani
+  public localizeNumber(num: string | number): string {
+    if (num === undefined || num === null) return '-';
+    const str = num.toString();
+    if (this.currentLanguage === 'en') return this.neToEnNum(str);
+    return this.enToNeNum(str);
+  }
+
+  public enToNeNum(text: string): string {
+    return text.split('').map(c => {
+      const idx = EN_NUMS.indexOf(c);
+      return idx !== -1 ? NE_NUMS[idx] : c;
+    }).join('');
+  }
+
+  public neToEnNum(text: string): string {
+    return text.split('').map(c => {
+      const idx = NE_NUMS.indexOf(c);
+      return idx !== -1 ? EN_NUMS[idx] : c;
+    }).join('');
+  }
 
   public async initialize() {
     if (this.isInitialized) return;
-
     try {
-      // Load ALL files unconditionally
-      const p1 = loadCSVAsset(cropCalendarEN).then(csv => this.cropCalendarDataEN = this.parseCropCalendarEN(parseCSV(csv)));
-      const p2 = loadCSVAsset(cropCalendarNE).then(csv => this.cropCalendarDataNE = this.parseNepaliData(parseCSV(csv)));
+      const loaders = [
+        loadCSVAsset(csvAssetsEN.cropCalendar).then(csv => this.cropCalendarEN = this.parseNewCropsCSV(parseCSV(csv), 'en')),
+        loadCSVAsset(csvAssetsNE.cropCalendar).then(csv => this.cropCalendarNE = this.parseNewCropsCSV(parseCSV(csv), 'ne')),
+      ];
 
-      // Load Fertilizer Data (Using English as source of truth for numbers)
-      const p3 = loadCSVAsset(chemicalFertilizersEN).then(csv => this.chemicalFertilizersData = this.parseChemicalFertilizer(parseCSV(csv)));
-
-      const p4 = loadCSVAsset(riceFertilizerEN).then(csv => this.regionalFertilizerData.push(...this.parseRegionalFertilizer(parseCSV(csv), 'Rice')));
-      const p5 = loadCSVAsset(maizeFertilizerEN).then(csv => this.regionalFertilizerData.push(...this.parseRegionalFertilizer(parseCSV(csv), 'Maize')));
-      const p6 = loadCSVAsset(wheatFertilizerEN).then(csv => this.regionalFertilizerData.push(...this.parseRegionalFertilizer(parseCSV(csv), 'Wheat')));
-
-      const p7 = loadCSVAsset(otherCropsFertilizerEN).then(csv => this.otherCropsFertilizerData = this.parseOtherCropsFertilizer(parseCSV(csv)));
-
-      const p8 = loadCSVAsset(optimalPHEN).then(csv => this.optimalPHData = this.parseOptimalPH(parseCSV(csv)));
-      const p8_ne = loadCSVAsset(optimalPHNE).then(csv => {
-        if (this.currentLanguage === 'ne') this.optimalPHData = this.parseOptimalPH(parseCSV(csv)); // Use Nepali for strings if active
-      });
-
-      await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p8_ne]);
-
+      await Promise.all(loaders);
       this.isInitialized = true;
-      console.log('✅ CSV Initialization Complete');
+      console.log('✅ CSVParser initialization complete (New Schema)');
     } catch (error) {
-      console.error('❌ Failed to initialize CSV Parser:', error);
+      console.error('❌ CSVParser initialization failed:', error);
     }
   }
 
-  // Storage for Other Crops Fertilizer
-  private otherCropsFertilizerData: any[] = [];
+  private parseNewCropsCSV(data: any[], lang: string): CropCalendarData[] {
+    return data.map(row => {
+      const isEn = lang === 'en';
 
-  // --- Parsing Logic ---
+      const yieldMin = parseFloat(this.neToEnNum(row['yield_min_kg'] || row['उत्पादन_न्यूनतम_केजी'] || '0'));
+      const yieldMax = parseFloat(this.neToEnNum(row['yield_max_kg'] || row['उत्पादन_अधिकतम_केजी'] || '0'));
 
-  private parseCropCalendarEN(data: any[]): CropCalendarData[] {
-    return data.map(row => ({
-      cropEnglish: row['Crop (English)'],
-      cropNepali: row['Crop (Nepali)'],
-      varieties: row['Varieties'],
-      spacing: row['Spacing (cm)'],
-      seedRate: row['Seed Rate per Ropani'],
-      intercrop: row['Suitable Intercrop'],
-      rotationCycle: row['Crop Rotation Cycle'],
-      cropCharacteristics: row['Crop Characteristics'],
-      climateAdaptation: row['Climate Adaptation Techniques']
-    }));
-  }
+      const matMin = parseFloat(this.neToEnNum(row['maturity_days_min'] || row['पक्वता_दिन_न्यूनतम'] || '0'));
+      const matMax = parseFloat(this.neToEnNum(row['maturity_days_max'] || row['पक्वता_दिन_अधिकतम'] || '0'));
 
-  private parseNepaliData(data: any[]): CropCalendarData[] {
-    return data.map(row => ({
-      region: row['क्षेत्र'],
-      cropEnglish: row['बालीको नाम (अंग्रेजी)'] || '',
-      cropNepali: row['बालीको नाम'],
-      varieties: row['जातहरू'],
-      spacing: row['लगाउने दूरी (से.मि.)'],
-      seedRate: row['बीउ दर (प्रति रोपनी)'],
-      plantingMonths: row['रोप्ने महिना'],
-      climateAdaptation: row['जलवायु अनुकूलन/उत्थानशीलता'],
-      cropCharacteristics: '' // Not explicit in Nepali CSV usually
-    }));
-  }
+      const phMin = parseFloat(this.neToEnNum(row['soil_ph_min'] || row['माटो_pH_न्यूनतम'] || '0'));
+      const phMax = parseFloat(this.neToEnNum(row['soil_ph_max'] || row['माटो_pH_अधिकतम'] || '0'));
 
-  private parseChemicalFertilizer(data: any[]): ChemicalFertilizerData[] {
-    const isEn = this.currentLanguage === 'en';
-    return data.map(row => ({
-      fertilizerName: isEn ? row['Fertilizer Name'] : row['मलको नाम'],
-      n: isEn ? row['N%'] : row['नाइट्रोजन %'],
-      p: isEn ? row['P2O5%'] : row['फस्फोरस %'],
-      k: isEn ? row['K2O%'] : row['पोटास %'],
-      zinc: isEn ? row['Zinc%'] : row['जिंक %'] || '-',
-      sulphur: isEn ? row['Sulphur%'] : row['सल्फर %'] || '-'
-    }));
-  }
+      const yieldStr = (yieldMin || yieldMax)
+        ? `${this.localizeNumber(yieldMin)}-${this.localizeNumber(yieldMax)} ${isEn ? 'kg' : 'के.जी.'}`
+        : '-';
 
-  private parseRegionalFertilizer(data: any[], cropName: string): RegionalFertilizerData[] {
-    return data.map(row => ({
-      crop: cropName,
-      region: row['Region'] || row['क्षेत्र'],
-      compost: row['Compost/FYM (ton/ha)'] || row['प्राङ्गारिक मल (टन/हेक्टर)'],
-      urea: row['Urea (kg/kattha)'] || row['युरिया (के.जी./कठ्ठा)'],
-      dap: row['DAP (kg/kattha)'] || row['डिएपी (के.जी./कठ्ठा)'],
-      mop: row['MoP (kg/kattha)'] || row['पोटास (के.जी./कठ्ठा)'],
-      varietyType: row['Variety Type'] || row['जातको प्रकार']
-    }));
-  }
+      const matStr = (matMin || matMax)
+        ? `${this.localizeNumber(matMin)}-${this.localizeNumber(matMax)} ${isEn ? 'days' : 'दिन'}`
+        : '-';
 
-  private parseOptimalPH(data: any[]): OptimalPHData[] {
-    const isEn = this.currentLanguage === 'en';
-    return data.map(row => ({
-      cropCategory: isEn ? row['Crop Category'] : row['बाली समूह'],
-      cropName: isEn ? row['Crop Name'] : row['बालीको नाम'],
-      optimalPHRange: isEn ? row['Optimal pH Range'] : row['उपयुक्त pH दायरा']
-    }));
-  }
+      const phStr = (phMin || phMax)
+        ? `${this.localizeNumber(phMin)}-${this.localizeNumber(phMax)}`
+        : '-';
 
-  private parseOtherCropsFertilizer(data: any[]): any[] {
-    return data.map(row => ({
-      crop: row['Crop'],
-      compost: parseFloat(row['Organic Manure (MT/ha)'] || '0'), // MT/ha
-      n: parseFloat(row['N (kg/ha)'] || '0'),
-      p: parseFloat(row['P (kg/ha)'] || '0'),
-      k: parseFloat(row['K (kg/ha)'] || '0')
-    }));
-  }
+      return {
+        region: 'All',
+        regionsRaw: row['regions'] || row['क्षेत्रहरू'] || '',
 
-  // --- Helper Query Methods ---
+        cropEnglish: isEn ? (row['crop_name'] || '') : '',
+        cropNepali: !isEn ? (row['बाली_नाम'] || '') : '',
 
-  /**
-   * Check if a specific month falls within the provided period string
-   * Handles ranges like "चैत-जेठ" and special values like "बाह्रै महिना"
-   */
-  private isMonthInPeriod(monthEn: string, periodString: string): boolean {
-    if (!periodString) return false;
+        varieties: row['variety'] || row['जात'] || '',
 
-    // Check for "All Year"
-    if (periodString.includes('बाह्रै महिना') || periodString.toLowerCase().includes('all year')) {
-      return true;
-    }
+        spacing: '',
+        seedRate: '',
 
-    const monthNe = MONTH_MAP_EN_TO_NE[monthEn];
-    if (!monthNe) return false;
+        ph: phStr,
+        maturity: matStr,
+        yield: yieldStr,
 
-    // Direct match (simple case)
-    if (periodString.includes(monthNe)) return true;
+        n: parseFloat(this.neToEnNum(row['n_kg'] || row['नाइट्रोजन_केजी'] || '0')),
+        p: parseFloat(this.neToEnNum(row['p_kg'] || row['फस्फोरस_केजी'] || '0')),
+        k: parseFloat(this.neToEnNum(row['k_kg'] || row['पोटासियम_केजी'] || '0')),
+        compost: parseFloat(this.neToEnNum(row['compost_kg'] || row['कम्पोस्ट_केजी'] || '0')),
 
-    // Range handling: Split by /, , or space to handle multiple ranges usually separated
-    // e.g. "चैत-जेठ / असोज-कात्तिक"
-    const ranges = periodString.split(/[\/,]/);
-    const targetIdx = NEPALI_MONTH_INDICES[monthNe];
+        urea: 0,
+        dap: 0,
+        mop: 0,
 
-    return ranges.some(range => {
-      const parts = range.trim().split('-');
-      if (parts.length === 2) {
-        const start = NEPALI_MONTH_INDICES[parts[0].trim()];
-        const end = NEPALI_MONTH_INDICES[parts[1].trim()];
-        if (start !== undefined && end !== undefined) {
-          if (start <= end) {
-            // Standard range e.g. Baisakh-Ashar
-            return targetIdx >= start && targetIdx <= end;
-          } else {
-            // Wrapping range e.g. Magh-Baisakh (Winter to Spring crossing year)
-            return targetIdx >= start || targetIdx <= end;
-          }
-        }
-      }
-      return false;
+        plantingMonths: row['planting_months'] || row['रोपाइँ_महिना'] || '',
+        remarks: row['remarks'] || row['कैफियत'] || '',
+      };
     });
   }
 
-  // Helper to fetch fertilizer info
-  private getFertilizerInfo(cropName: string, regionKey: string = 'mid'): { compost: number, n: number, p: number, k: number } {
-    // 1. Check Regional Data (Rice/Maize/Wheat)
-    // Filter matching crop
-    const regionalMatches = this.regionalFertilizerData.filter(rf => rf.crop.toLowerCase().includes(cropName.toLowerCase()));
-
-    if (regionalMatches.length > 0) {
-      // Filter by region keyword
-      const regionSearch = regionKey === 'terai' ? 'Terai' : (regionKey === 'high' ? 'High' : 'Hill');
-      const matches = regionalMatches.filter(rf => rf.region.includes(regionSearch) || (regionSearch === 'Hill' && rf.region.includes('Mid')));
-
-      if (matches.length > 0) {
-        // Average the matches if multiple (e.g. Western Terai vs Eastern Terai)
-        return {
-          compost: (matches.reduce((sum, m) => sum + parseFloat(m.compost || '0'), 0) / matches.length) * 1000 * this.HA_TO_ROPANI_FACTOR, // Ton/ha -> kg/Ropani
-          n: (matches.reduce((sum, m) => sum + parseFloat(m.urea || '0') * 0.46, 0) / matches.length), // Approx N from Urea? No, CSV has direct N/P/K or Urea/DAP? 
-          // Wait, Rice CSV has pure Urea/DAP/MoP kg/kattha. 
-          // I need to confirm `02_...` units. 
-          // Header: Urea (kg/kattha).
-          // 1 Kattha = 338 m2. 1 Ropani = 508 m2. Factor = 1.5 roughly.
-          // Let's rely on `05` logic for vegetables since user complained about those.
-          // For Rice/Maize: returning 0 for now to be safe on unit mixing, or just implement?
-          // I'll skip complex Rice calc for now and focus on `05` vegetables.
-          p: 0, k: 0
-        };
-      }
-    }
-
-    // 2. Check Other Crops (Vegetables usually here)
-    // Fuzzy match crop name
-    const matches = this.otherCropsFertilizerData.filter(oc =>
-      // oc.crop like "Tomato - Terai Irrigated"
-      // cropName like "Tomato"
-      oc.crop.toLowerCase().includes(cropName.toLowerCase())
-    );
-
-    if (matches.length > 0) {
-      // Filter by region if possible
-      const regionSearch = regionKey === 'terai' ? 'Terai' : (regionKey === 'high' ? 'High' : 'Hill');
-      let regionalMatch = matches.find(m => m.crop.includes(regionSearch));
-
-      const bestMatch = regionalMatch || matches[0];
-
-      return {
-        compost: bestMatch.compost * 1000 * this.HA_TO_ROPANI_FACTOR, // MT/ha -> kg/Ropani
-        n: bestMatch.n * this.HA_TO_ROPANI_FACTOR, // kg/ha -> kg/Ropani
-        p: bestMatch.p * this.HA_TO_ROPANI_FACTOR,
-        k: bestMatch.k * this.HA_TO_ROPANI_FACTOR
-      };
-    }
-
-    return { compost: 0, n: 0, p: 0, k: 0 };
-  }
-
-  /**
-   * Get consolidated crop data for the library view
-   * Combines all regional information for a single crop
-   */
-  public getCropsData(): CropData[] {
-    const cropMap = new Map<string, CropData>();
+  public getCropsData(regionKey: string = 'mid'): CropData[] {
     const isNe = this.currentLanguage === 'ne';
+    const list = isNe ? this.cropCalendarNE : this.cropCalendarEN;
+    const cropMap = new Map<string, CropData>();
 
-    // We iterate over the Nepali master data because it contains ALL region info
-    // and consolidate it by 'cropEnglish' key
-    this.cropCalendarDataNE.forEach(row => {
-      // Key by English name for uniqueness
-      const key = (row.cropEnglish || '').toLowerCase();
-      if (!key) return; // Skip if no key
+    list.forEach((row, idx) => {
+      const displayCrop = isNe ? (row.cropNepali || row.cropEnglish) : (row.cropEnglish || row.cropNepali);
 
-      let entry = cropMap.get(key);
+      if (!displayCrop) return;
+
+      const regionsRaw = (row.regionsRaw || '').toLowerCase();
+      const regionSearchMap: { [key: string]: string[] } = {
+        'high': ['high', 'उच्च'],
+        'mid': ['mid', 'मध्य'],
+        'terai': ['terai', 'तराई']
+      };
+
+      const searchTerms = regionSearchMap[regionKey] || [];
+      const matchesRegion = searchTerms.some(term => regionsRaw.includes(term));
+
+      // Unique key for each crop+variety combo
+      const uniqueKey = `${displayCrop}_${row.varieties}`;
+
+      let entry = cropMap.get(uniqueKey);
+
       if (!entry) {
-        // Initialize entry
-        // Try to find matching English data for detailed remarks if in English mode
-        const enData = this.cropCalendarDataEN.find(e => e.cropEnglish.toLowerCase() === key);
-
-        let characteristics = '';
-        let adaptation = '';
-
-        if (isNe) {
-          characteristics = row.climateAdaptation || '';
-          adaptation = ''; // Adaptation is usually merged in Nepali CSV or we use single field
-        } else {
-          characteristics = enData?.cropCharacteristics || '';
-          adaptation = enData?.climateAdaptation || '';
-        }
-
-        const remarks = [characteristics, adaptation].filter(x => x).join('. ');
-
-        // Get Fertilizer Info (Default to Mid Hills for library view)
-        const fert = this.getFertilizerInfo(row.cropEnglish, 'mid');
-
-        // Robust name selection
-        let displayCrop = row.cropEnglish;
-        if (isNe) {
-          displayCrop = row.cropNepali || enData?.cropNepali || row.cropEnglish;
-        }
-
         entry = {
           crop: displayCrop,
-          variety: row.varieties, // Initial variety
+          variety: row.varieties,
           sn: cropMap.size + 1,
-          compost: parseFloat(fert.compost.toFixed(1)),
-          nitrogen: parseFloat(fert.n.toFixed(1)),
-          phosphorus: parseFloat(fert.p.toFixed(1)),
-          potassium: parseFloat(fert.k.toFixed(1)),
-          plantSpacing: parseFloat((row.spacing || '').split('×')[0] || (row.spacing || '').split('x')[0] || '0') || 0,
-          rowSpacing: parseFloat((row.spacing || '').split('×')[1] || (row.spacing || '').split('x')[1] || '0') || 0,
-          seedRate: row.seedRate || '-',
-          maturityDays: '-', // Not available in new data
-          yield: '-', // Not available in new data
-          remarks: remarks || (isNe ? 'विवरण उपलब्ध छैन।' : 'No detailed info available.')
-        };
-        cropMap.set(key, entry);
-      }
+          compost: row.compost || 0,
+          nitrogen: row.n || 0,
+          phosphorus: row.p || 0,
+          potassium: row.k || 0,
+          urea: 0,
+          dap: 0,
+          mop: 0,
 
-      // Populate Sowing Times per Region
-      if (row.region === 'उच्च पहाड') entry.highHillSowing = row.plantingMonths;
-      if (row.region === 'मध्य पहाड') entry.midHillSowing = row.plantingMonths;
-      if (row.region === 'तराई') entry.teraiSowing = row.plantingMonths;
+          plantSpacing: 0,
+          rowSpacing: 0,
+          seedRate: isNe ? 'उपलब्ध छैन' : 'N/A',
+
+          maturityDays: row.maturity || '-',
+          yield: row.yield || '-',
+          remarks: row.remarks || '',
+          phRange: row.ph || '-'
+        };
+
+        const sowing = row.plantingMonths;
+        if (regionsRaw.includes('high') || regionsRaw.includes('उच्च')) entry.highHillSowing = sowing;
+        if (regionsRaw.includes('mid') || regionsRaw.includes('मध्य')) entry.midHillSowing = sowing;
+        if (regionsRaw.includes('terai') || regionsRaw.includes('तराई')) entry.teraiSowing = sowing;
+
+        // Add if matches region, or if "All" logic is applied (currently filtering strictly)
+        if (matchesRegion) {
+          cropMap.set(uniqueKey, entry);
+        }
+      }
     });
 
     return Array.from(cropMap.values());
   }
 
-  /**
-   * Get crops by month for a specific region
-   * Used for Seasonal Calendar and Home Widget
-   */
-  public getCropsByMonth(
-    monthBaseEn: string,
-    regionKey: "high" | "mid" | "terai" = "mid"
-  ): CropData[] {
-    const isNe = this.currentLanguage === 'ne';
-    const targetRegionNe = REGION_MAP_EN_TO_NE[regionKey];
-
-    // Filter using Master Nepali Data (contains region & sowing info)
-    const filtered = this.cropCalendarDataNE.filter(row => {
-      // 1. Check Region
-      if (row.region !== targetRegionNe) return false;
-
-      // 2. Check Month
-      if (!this.isMonthInPeriod(monthBaseEn, row.plantingMonths || '')) return false;
-
-      return true;
-    });
-
-    // Map to Legacy CropData format
-    return filtered.map((row, index) => {
-      // Find english data for details if needed
-      const enData = this.cropCalendarDataEN.find(e => e.cropEnglish.toLowerCase() === (row.cropEnglish || '').toLowerCase());
-
-      let characteristics = '';
-      let adaptation = '';
-
-      if (isNe) {
-        characteristics = row.climateAdaptation || '';
-      } else {
-        characteristics = enData?.cropCharacteristics || '';
-        adaptation = enData?.climateAdaptation || '';
-      }
-
-      const remarks = [characteristics, adaptation].filter(x => x).join('. ');
-
-      // Get Fertilizer Info Specific to Region
-      const fert = this.getFertilizerInfo(row.cropEnglish, regionKey);
-
-      // Robust name selection
-      let displayCrop = row.cropEnglish;
-      if (isNe) {
-        displayCrop = row.cropNepali || enData?.cropNepali || row.cropEnglish;
-      }
-
-      return {
-        crop: displayCrop,
-        variety: row.varieties,
-        sn: index + 1,
-        // Since we filtered by region, we populate the relevant sowing time
-        highHillSowing: row.region === 'उच्च पहाड' ? row.plantingMonths : undefined,
-        midHillSowing: row.region === 'मध्य पहाड' ? row.plantingMonths : undefined,
-        teraiSowing: row.region === 'तराई' ? row.plantingMonths : undefined,
-        compost: parseFloat(fert.compost.toFixed(1)),
-        nitrogen: parseFloat(fert.n.toFixed(1)),
-        phosphorus: parseFloat(fert.p.toFixed(1)),
-        potassium: parseFloat(fert.k.toFixed(1)),
-        plantSpacing: parseFloat((row.spacing || '').split('×')[0] || (row.spacing || '').split('x')[0] || '0') || 0,
-        rowSpacing: parseFloat((row.spacing || '').split('×')[1] || (row.spacing || '').split('x')[1] || '0') || 0,
-        seedRate: row.seedRate,
-        maturityDays: '-',
-        yield: '-',
-        remarks: remarks || (isNe ? 'विवरण उपलब्ध छैन।' : 'No detailed info available.')
-      };
-    });
-  }
-
-  public searchCrops(query: string): CropData[] {
-    const crops = this.getCropsData(); // Get consolidated list
-    const lowerQuery = query.toLowerCase();
-
-    return crops.filter(crop =>
-      crop.crop.toLowerCase().includes(lowerQuery) ||
-      crop.variety.toLowerCase().includes(lowerQuery) ||
-      crop.remarks.toLowerCase().includes(lowerQuery)
-    );
-  }
-
-  /**
-   * Get pH info for a crop (legacy method)
-   */
-  public getPHInfo(vegetable: string): PHData | undefined {
-    const phData = this.optimalPHData;
-    const found = phData.find(
-      (ph) => ph.cropName.toLowerCase().includes(vegetable.toLowerCase())
-    );
-
-    if (found) {
-      return {
-        vegetable: found.cropName,
-        optimalPHRange: found.optimalPHRange,
-        categoryPreference: found.cropCategory,
-      };
-    }
-
-    return undefined;
-  }
-
-  // New Methods for detailed access if needed
-  public getRegionalFertilizer(crop: string, region: string) {
-    return this.regionalFertilizerData.find(rf => rf.crop === crop && rf.region === region);
-  }
-
-  /**
-   * Get list of all available crop names
-   */
   public getAllCrops(): string[] {
-    return this.getCropsData().map(c => c.crop).sort();
+    // Unique list of crop names
+    return Array.from(new Set(this.getCropsData('mid').map(c => c.crop)));
   }
 
-  /**
-   * Get specific crop details by name
-   */
-  public getCropInfo(cropName: string): CropData | undefined {
-    return this.getCropsData().find(c => c.crop.toLowerCase() === cropName.toLowerCase());
+  public getCropInfo(name: string): CropData | undefined {
+    return this.getCropsData('mid').find(c => c.crop.toLowerCase() === name.toLowerCase());
+  }
+
+  public getCropsByMonth(monthEn: string, region: 'high' | 'mid' | 'terai' = 'mid'): CropData[] {
+    const allCrops = this.getCropsData(region);
+    return allCrops.filter(crop => {
+      let sowing = region === 'high' ? crop.highHillSowing : (region === 'terai' ? crop.teraiSowing : crop.midHillSowing);
+      if (!sowing) return false;
+      return this.monthMatch(monthEn, sowing);
+    });
+  }
+
+  private monthMatch(monthEn: string, period: string): boolean {
+    if (!period) return false;
+    const p = period.toLowerCase();
+
+    // Map Nepali Month Index (0=Baisakh) to allowed Gregorian Months roughly
+    const NE_TO_GREG_MAP = [
+      ['apr', 'may'], // Baisakh
+      ['may', 'jun'], // Jestha
+      ['jun', 'jul'], // Ashar
+      ['jul', 'aug'], // Shrawan
+      ['aug', 'sep'], // Bhadra
+      ['sep', 'oct'], // Ashwin
+      ['oct', 'nov'], // Kartik
+      ['nov', 'dec'], // Mangsir
+      ['dec', 'jan'], // Poush
+      ['jan', 'feb'], // Magh
+      ['feb', 'mar'], // Falgun
+      ['mar', 'apr']  // Chaitra
+    ];
+
+    const monthIdx = NEPALI_MONTH_INDICES[monthEn];
+    if (monthIdx === undefined) return false;
+
+    // Check if the sowing period string (likely Gregorian "Sep-Dec") overlaps with the selected Nepali month
+    const allowedGreg = NE_TO_GREG_MAP[monthIdx];
+    const expandedMonths = this.expandGregorianRange(p);
+
+    return allowedGreg.some(m => expandedMonths.includes(m));
+  }
+
+  private expandGregorianRange(period: string): string[] {
+    const p = period.toLowerCase();
+    if (p.includes('all year')) return GREGORIAN_MONTHS;
+
+    const parts = p.split(/[–-]/); // em dash or hyphen
+    if (parts.length === 2) {
+      const startStr = parts[0].substring(0, 3);
+      const endStr = parts[1].substring(0, 3);
+
+      let startIdx = GREGORIAN_MONTHS.indexOf(startStr);
+      let endIdx = GREGORIAN_MONTHS.indexOf(endStr);
+
+      if (startIdx !== -1 && endIdx !== -1) {
+        const res = [];
+        if (endIdx < startIdx) {
+          for (let i = startIdx; i < 12; i++) res.push(GREGORIAN_MONTHS[i]);
+          for (let i = 0; i <= endIdx; i++) res.push(GREGORIAN_MONTHS[i]);
+        } else {
+          for (let i = startIdx; i <= endIdx; i++) res.push(GREGORIAN_MONTHS[i]);
+        }
+        return res;
+      }
+    }
+    return GREGORIAN_MONTHS.filter(m => p.includes(m));
+  }
+
+  public searchCrops(q: string): CropData[] {
+    const query = q.toLowerCase();
+    return this.getCropsData('mid').filter(c =>
+      c.crop.toLowerCase().includes(query) ||
+      c.variety.toLowerCase().includes(query)
+    );
   }
 }
 

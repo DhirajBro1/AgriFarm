@@ -257,7 +257,10 @@
         "toolNames": {
             "yield": "Yield Calculator",
             "area": "Area Converter",
-            "unit": "Weight Converter"
+            "unit": "Weight Converter",
+            "fertilizer": "Fertilizer Calculator",
+            "standards": "Standards",
+            "lime": "Lime Requirements"
         },
         "yieldCalculator": {
             "title": "Yield Calculator",
@@ -299,6 +302,30 @@
                 "muri": "Muri",
                 "pathi": "Pathi"
             }
+        },
+        "fertilizerCalculator": {
+            "title": "Fertilizer Calculator",
+            "subtitle": "Calculate required Urea, DAP, and MOP",
+            "calculate": "Calculate Requirements",
+            "result": "Recommended Fertilizer",
+            "urea": "Urea",
+            "dap": "DAP",
+            "mop": "MOP",
+            "compost": "Compost"
+        },
+        "standards": {
+            "title": "Quality Standards",
+            "parameter": "Parameter",
+            "requirement": "Requirement",
+            "types": {
+                "organic": "Organic",
+                "bio": "Bio",
+                "fym": "FYM"
+            }
+        },
+        "lime": {
+            "title": "Lime Requirements",
+            "subtitle": "Metric Tons per Hectare"
         }
     },
     "common": {

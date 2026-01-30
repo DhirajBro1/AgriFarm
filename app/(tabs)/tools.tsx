@@ -1,7 +1,3 @@
-/**
- * ToolsScreen - Complete Farming Tools Suite
- * Yield Calculator, Area Converter, Unit Converter
- */
 
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
@@ -22,450 +18,457 @@ import { ThemeColors, useTheme } from "../../theme/ThemeProvider";
 import CSVParser from "../../utils/csvParser";
 
 const TOOLS = [
-  { id: 'yield', name: 'Yield Calculator', icon: 'calculator' },
-  { id: 'area', name: 'Area Converter', icon: 'map' },
-  { id: 'unit', name: 'Unit Converter', icon: 'scale' },
-];
+  { id: 'yield', nameKey: 'tools.toolNames.yield', icon: 'calculator' },
+  { id: 'fertilizer', nameKey: 'tools.toolNames.fertilizer', icon: 'leaf' },
+  { id: 'area', nameKey: 'tools.toolNames.area', icon: 'map' },
+  { id: 'unit', nameKey: 'tools.toolNames.unit', icon: 'scale' },
+] as const;
 
-// Area conversion factors (all to square meters)
-const AREA_UNITS = {
-  ropani: { name: 'Ropani', toSqM: 508.72, symbol: 'ropani' },
-  aana: { name: 'Aana', toSqM: 31.80, symbol: 'aana' },
-  bigha: { name: 'Bigha', toSqM: 6772.63, symbol: 'bigha' },
-  hectare: { name: 'Hectare', toSqM: 10000, symbol: 'ha' },
-  acre: { name: 'Acre', toSqM: 4046.86, symbol: 'acre' },
-};
+type ToolId = typeof TOOLS[number]['id'];
 
-// Weight conversion factors (all to kg)
-const WEIGHT_UNITS = {
-  kg: { name: 'Kilogram', toKg: 1, symbol: 'kg' },
-  quintal: { name: 'Quintal', toKg: 100, symbol: 'q' },
-  ton: { name: 'Ton (Metric)', toKg: 1000, symbol: 't' },
-  muri: { name: 'Muri', toKg: 80, symbol: 'muri' },
-  pathi: { name: 'Pathi', toKg: 4.5, symbol: 'pathi' },
-};
+interface FertilizerResult {
+  urea: string;
+  dap: string;
+  mop: string;
+  compost: string;
+}
+
+// UnitsHelper
+const getAreaUnits = (t: any) => ({
+  ropani: { name: t('tools.areaConverter.units.ropani'), toSqM: 508.72, symbol: t('tools.areaConverter.units.ropani') },
+  aana: { name: t('tools.areaConverter.units.aana'), toSqM: 31.80, symbol: t('tools.areaConverter.units.aana') },
+  bigha: { name: t('tools.areaConverter.units.bigha'), toSqM: 6772.63, symbol: t('tools.areaConverter.units.bigha') },
+  hectare: { name: t('tools.areaConverter.units.hectare'), toSqM: 10000, symbol: 'Ha' },
+  acre: { name: 'Acre', toSqM: 4046.86, symbol: 'Ac' },
+  sqm: { name: t('tools.areaConverter.units.sqMeter'), toSqM: 1, symbol: 'm²' },
+});
+
+const getWeightUnits = (t: any) => ({
+  kg: { name: t('tools.weightConverter.units.kg'), toKg: 1, symbol: 'Kg' },
+  quintal: { name: t('tools.weightConverter.units.quintal'), toKg: 100, symbol: 'Q' },
+  ton: { name: t('tools.weightConverter.units.ton'), toKg: 1000, symbol: 'MT' },
+  muri: { name: t('tools.weightConverter.units.muri'), toKg: 80, symbol: t('tools.weightConverter.units.muri') },
+  pathi: { name: t('tools.weightConverter.units.pathi'), toKg: 4.5, symbol: t('tools.weightConverter.units.pathi') },
+  lb: { name: 'Pound', toKg: 0.453592, symbol: 'Lb' },
+});
+
+
+// --- Main Component ---
 
 export default function ToolsScreen() {
   const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors, typography, spacing, insets), [colors, typography, spacing, insets]);
 
-  const [activeTool, setActiveTool] = useState('yield');
+  const [activeTool, setActiveTool] = useState<ToolId>('yield');
+  const csvParser = useMemo(() => CSVParser.getInstance(), []);
 
-  // Yield Calc State
+  // Sync language with CSVParser
+  React.useEffect(() => {
+    const lang = i18n.language.startsWith('ne') ? 'ne' : 'en';
+    csvParser.setLanguage(lang);
+  }, [i18n.language, csvParser]);
+
+  // --- Tool Specific State ---
+  // Yield
   const [landArea, setLandArea] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState<string>("");
   const [calculatedYield, setCalculatedYield] = useState<string | null>(null);
 
-  // Area Converter State
+  // Fertilizer
+  const [fertArea, setFertArea] = useState("");
+  const [fertCrop, setFertCrop] = useState<string>("");
+  const [fertilizerResult, setFertilizerResult] = useState<FertilizerResult | null>(null);
+
+  // Area
   const [areaValue, setAreaValue] = useState("");
-  const [areaFromUnit, setAreaFromUnit] = useState<keyof typeof AREA_UNITS>("ropani");
-  const [areaToUnit, setAreaToUnit] = useState<keyof typeof AREA_UNITS>("hectare");
-  const [areaResult, setAreaResult] = useState<string | null>(null);
+  const [areaFrom, setAreaFrom] = useState<string>("ropani");
+  const [areaTo, setAreaTo] = useState<string>("hectare");
 
-  // Unit Converter State
+  // Unit
   const [weightValue, setWeightValue] = useState("");
-  const [weightFromUnit, setWeightFromUnit] = useState<keyof typeof WEIGHT_UNITS>("kg");
-  const [weightToUnit, setWeightToUnit] = useState<keyof typeof WEIGHT_UNITS>("quintal");
-  const [weightResult, setWeightResult] = useState<string | null>(null);
+  const [weightFrom, setWeightFrom] = useState<string>("kg");
+  const [weightTo, setWeightTo] = useState<string>("quintal");
 
-  // Picker Modals
-  const [showAreaFromPicker, setShowAreaFromPicker] = useState(false);
-  const [showAreaToPicker, setShowAreaToPicker] = useState(false);
-  const [showWeightFromPicker, setShowWeightFromPicker] = useState(false);
-  const [showWeightToPicker, setShowWeightToPicker] = useState(false);
+  // Modals
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pickerContext, setPickerContext] = useState<'yield' | 'fert' | 'areaFrom' | 'areaTo' | 'weightFrom' | 'weightTo' | null>(null);
 
-  const csvParser = useMemo(() => CSVParser.getInstance(), []);
+  const AREA_UNITS = useMemo(() => getAreaUnits(t), [t]);
+  const WEIGHT_UNITS = useMemo(() => getWeightUnits(t), [t]);
+
+  // --- Logic ---
 
   const calculateYield = () => {
-    if (!landArea || selectedCrop === "") return;
+    if (!landArea || !selectedCrop) return;
+    const cropData = csvParser.getCropsData().find(c => c.crop === selectedCrop);
+    if (!cropData) return;
 
-    const cropData = csvParser.getCropInfo(selectedCrop);
     let avgYield = 2000;
-
-    if (cropData && cropData.yield) {
-      const parts = cropData.yield.match(/(\d+)/g);
-      if (parts && parts.length > 0) {
-        const min = parseInt(parts[0]);
-        const max = parts.length > 1 ? parseInt(parts[1]) : min;
+    if (cropData.yield) {
+      const nums = cropData.yield.match(/(\d+(\.\d+)?)/g);
+      if (nums && nums.length > 0) {
+        const min = parseFloat(nums[0]);
+        const max = nums.length > 1 ? parseFloat(nums[1]) : min;
         avgYield = (min + max) / 2;
       }
     }
 
     const areaVal = parseFloat(landArea);
-    const total = (avgYield * (areaVal * 0.05)).toFixed(2);
+    const total = avgYield * areaVal;
 
-    setCalculatedYield(`${total} Kg`);
+    setCalculatedYield(`${total.toLocaleString('en-US', { maximumFractionDigits: 0 })} Kg`);
     Keyboard.dismiss();
   };
 
-  const convertArea = () => {
-    if (!areaValue) return;
+  const calculateFertilizer = () => {
+    if (!fertArea || !fertCrop) return;
+    const cropData = csvParser.getCropsData().find(c => c.crop === fertCrop);
+    if (!cropData) return;
 
-    const inputValue = parseFloat(areaValue);
-    const sqMeters = inputValue * AREA_UNITS[areaFromUnit].toSqM;
-    const result = sqMeters / AREA_UNITS[areaToUnit].toSqM;
+    const areaVal = parseFloat(fertArea); // Ropani
+    const haArea = areaVal * 0.050872;   // Ha
 
-    setAreaResult(`${result.toFixed(4)} ${AREA_UNITS[areaToUnit].symbol}`);
+    let urea = 0, dap = 0, mop = 0, compost = 0;
+
+    const reqN = cropData.nitrogen || 0;
+    const reqP = cropData.phosphorus || 0;
+    const reqK = cropData.potassium || 0;
+
+    const dapNeededPerHa = reqP / 0.46;
+    const nFromDap = dapNeededPerHa * 0.18;
+    const remainingN = Math.max(0, reqN - nFromDap);
+    const ureaNeededPerHa = remainingN / 0.46;
+    const mopNeededPerHa = reqK / 0.60;
+
+    urea = ureaNeededPerHa * haArea;
+    dap = dapNeededPerHa * haArea;
+    mop = mopNeededPerHa * haArea;
+
+    const compostRaw = cropData.compost || 0;
+    const compostPerHa = compostRaw;
+    compost = compostPerHa * haArea;
+
+    setFertilizerResult({
+      urea: urea < 0.1 ? '0' : urea.toFixed(1),
+      dap: dap < 0.1 ? '0' : dap.toFixed(1),
+      mop: mop < 0.1 ? '0' : mop.toFixed(1),
+      compost: compost.toFixed(0)
+    });
     Keyboard.dismiss();
   };
 
-  const convertWeight = () => {
-    if (!weightValue) return;
+  // --- Handlers ---
+  const handlePickerSelect = (val: string) => {
+    if (pickerContext === 'yield') setSelectedCrop(val);
+    else if (pickerContext === 'fert') setFertCrop(val);
+    else if (pickerContext === 'areaFrom') setAreaFrom(val);
+    else if (pickerContext === 'areaTo') setAreaTo(val);
+    else if (pickerContext === 'weightFrom') setWeightFrom(val);
+    else if (pickerContext === 'weightTo') setWeightTo(val);
 
-    const inputValue = parseFloat(weightValue);
-    const kg = inputValue * WEIGHT_UNITS[weightFromUnit].toKg;
-    const result = kg / WEIGHT_UNITS[weightToUnit].toKg;
-
-    setWeightResult(`${result.toFixed(4)} ${WEIGHT_UNITS[weightToUnit].symbol}`);
-    Keyboard.dismiss();
+    setPickerVisible(false);
+    setPickerContext(null);
   };
 
-  const renderToolContent = () => {
-    if (activeTool === 'yield') {
-      return (
-        <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>{t('tools.yieldCalculator.title')}</Text>
-          <Text style={styles.toolDesc}>{t('tools.yieldCalculator.subtitle')}</Text>
-
-          <Text style={styles.inputLabel}>{t('common.selectCrop')}</Text>
-          <TouchableOpacity style={styles.selectorBtn} onPress={() => setModalVisible(true)}>
-            <Text style={[styles.selectorText, selectedCrop === "" && styles.placeholderText]}>
-              {selectedCrop || t('common.selectCrop')}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <Text style={styles.inputLabel}>{t('tools.yieldCalculator.area')}</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 5"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numeric"
-              value={landArea}
-              onChangeText={setLandArea}
-            />
-            <Text style={styles.unitText}>{t('tools.areaConverter.units.ropani')}</Text>
-          </View>
-
-          <TouchableOpacity style={styles.actionBtn} onPress={calculateYield}>
-            <Text style={styles.actionBtnText}>{t('tools.yieldCalculator.calculate')}</Text>
-          </TouchableOpacity>
-
-          {calculatedYield && (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>{t('tools.yieldCalculator.result')}</Text>
-              <Text style={styles.resultValue}>{calculatedYield}</Text>
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    if (activeTool === 'area') {
-      return (
-        <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>{t('tools.areaConverter.title')}</Text>
-          <Text style={styles.toolDesc}>{t('tools.areaConverter.subtitle')}</Text>
-
-          <Text style={styles.inputLabel}>{t('tools.areaConverter.from')}</Text>
-          <View style={styles.converterRow}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder={t('tools.areaConverter.enterValue')}
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numeric"
-              value={areaValue}
-              onChangeText={setAreaValue}
-            />
-            <View style={styles.unitSelector}>
-              <TouchableOpacity
-                style={styles.unitBtn}
-                onPress={() => setShowAreaFromPicker(true)}
-              >
-                <Text style={styles.unitBtnText}>{t(`tools.areaConverter.units.${areaFromUnit}`)}</Text>
-                <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.swapContainer}>
-            <TouchableOpacity
-              style={styles.swapBtn}
-              onPress={() => {
-                const temp = areaFromUnit;
-                setAreaFromUnit(areaToUnit);
-                setAreaToUnit(temp);
-              }}
-            >
-              <Ionicons name="swap-vertical" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.inputLabel}>{t('tools.areaConverter.to')}</Text>
-          <View style={styles.unitSelector}>
-            <TouchableOpacity
-              style={styles.unitBtn}
-              onPress={() => setShowAreaToPicker(true)}
-            >
-              <Text style={styles.unitBtnText}>{t(`tools.areaConverter.units.${areaToUnit}`)}</Text>
-              <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.actionBtn} onPress={convertArea}>
-            <Text style={styles.actionBtnText}>{t('tools.areaConverter.convert')}</Text>
-          </TouchableOpacity>
-
-          {areaResult && (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>{t('tools.areaConverter.result')}</Text>
-              <Text style={styles.resultValue}>{areaResult}</Text>
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    if (activeTool === 'unit') {
-      return (
-        <View style={styles.toolContainer}>
-          <Text style={styles.toolTitle}>{t('tools.weightConverter.title')}</Text>
-          <Text style={styles.toolDesc}>{t('tools.weightConverter.subtitle')}</Text>
-
-          <Text style={styles.inputLabel}>{t('tools.weightConverter.from')}</Text>
-          <View style={styles.converterRow}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder={t('tools.weightConverter.enterWeight')}
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numeric"
-              value={weightValue}
-              onChangeText={setWeightValue}
-            />
-            <View style={styles.unitSelector}>
-              <TouchableOpacity
-                style={styles.unitBtn}
-                onPress={() => setShowWeightFromPicker(true)}
-              >
-                <Text style={styles.unitBtnText}>{t(`tools.weightConverter.units.${weightFromUnit}`)}</Text>
-                <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.swapContainer}>
-            <TouchableOpacity
-              style={styles.swapBtn}
-              onPress={() => {
-                const temp = weightFromUnit;
-                setWeightFromUnit(weightToUnit);
-                setWeightToUnit(temp);
-              }}
-            >
-              <Ionicons name="swap-vertical" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.inputLabel}>{t('tools.weightConverter.to')}</Text>
-          <View style={styles.unitSelector}>
-            <TouchableOpacity
-              style={styles.unitBtn}
-              onPress={() => setShowWeightToPicker(true)}
-            >
-              <Text style={styles.unitBtnText}>{t(`tools.weightConverter.units.${weightToUnit}`)}</Text>
-              <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.actionBtn} onPress={convertWeight}>
-            <Text style={styles.actionBtnText}>{t('tools.weightConverter.convert')}</Text>
-          </TouchableOpacity>
-
-          {weightResult && (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>{t('tools.weightConverter.result')}</Text>
-              <Text style={styles.resultValue}>{weightResult}</Text>
-            </View>
-          )}
-        </View>
-      );
-    }
+  const getPickerItems = () => {
+    if (pickerContext === 'yield' || pickerContext === 'fert') return csvParser.getAllCrops().map(c => ({ label: c, value: c }));
+    if (pickerContext?.startsWith('area')) return Object.keys(AREA_UNITS).map(k => ({ label: AREA_UNITS[k as keyof typeof AREA_UNITS].name, value: k }));
+    if (pickerContext?.startsWith('weight')) return Object.keys(WEIGHT_UNITS).map(k => ({ label: WEIGHT_UNITS[k as keyof typeof WEIGHT_UNITS].name, value: k }));
+    return [];
   };
+
+  const getAreaResult = () => {
+    if (!areaValue) return null;
+    const val = parseFloat(areaValue);
+    if (isNaN(val)) return null;
+    const fromUnit = AREA_UNITS[areaFrom as keyof typeof AREA_UNITS];
+    const toUnit = AREA_UNITS[areaTo as keyof typeof AREA_UNITS];
+
+    if (!fromUnit || !toUnit) return "-";
+
+    const sqm = val * fromUnit.toSqM;
+    const res = sqm / toUnit.toSqM;
+    return `${res.toFixed(4)} ${toUnit.symbol}`;
+  };
+
+  const getWeightResult = () => {
+    if (!weightValue) return null;
+    const val = parseFloat(weightValue);
+    if (isNaN(val)) return null;
+    const fromUnit = WEIGHT_UNITS[weightFrom as keyof typeof WEIGHT_UNITS];
+    const toUnit = WEIGHT_UNITS[weightTo as keyof typeof WEIGHT_UNITS];
+
+    if (!fromUnit || !toUnit) return "-";
+
+    const kg = val * fromUnit.toKg;
+    const res = kg / toUnit.toKg;
+    return `${res.toFixed(3)} ${toUnit.symbol}`;
+  };
+
+
+  // --- Render Functions ---
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>{t('tools.title')}</Text>
+    </View>
+  );
+
+  const renderTabs = () => (
+    <View style={styles.tabContainer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
+        {TOOLS.map((tool) => {
+          const isActive = activeTool === tool.id;
+          return (
+            <TouchableOpacity
+              key={tool.id}
+              style={[styles.tab, isActive && styles.tabActive]}
+              onPress={() => setActiveTool(tool.id)}
+            >
+              <Ionicons
+                name={isActive ? tool.icon as any : `${tool.icon}-outline` as any}
+                size={18}
+                color={isActive ? colors.background : colors.textSecondary}
+              />
+              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                {t(tool.nameKey)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+
+  const renderYieldCalc = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>{t('tools.yieldCalculator.title')}</Text>
+      <Text style={styles.cardSubtitle}>{t('tools.yieldCalculator.subtitle')}</Text>
+
+      {/* Crop Selector */}
+      <Text style={styles.label}>{t('common.selectCrop')}</Text>
+      <TouchableOpacity
+        style={styles.pickerButton}
+        onPress={() => { setPickerContext('yield'); setPickerVisible(true); }}
+      >
+        <Text style={[styles.pickerText, !selectedCrop && styles.placeholder]}>
+          {selectedCrop || t('common.selectCrop')}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      {/* Area Input */}
+      <Text style={styles.label}>{t('tools.yieldCalculator.area')}</Text>
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.input}
+          placeholder="0"
+          keyboardType="numeric"
+          value={landArea}
+          onChangeText={setLandArea}
+          placeholderTextColor={colors.textSecondary + '80'}
+        />
+        <View style={styles.suffixBox}>
+          <Text style={styles.suffixText}>{t('tools.areaConverter.units.ropani')}</Text>
+        </View>
+      </View>
+
+      {/* Calculate Button */}
+      <TouchableOpacity style={styles.primaryBtn} onPress={calculateYield}>
+        <Text style={styles.primaryBtnText}>{t('tools.yieldCalculator.calculate')}</Text>
+      </TouchableOpacity>
+
+      {/* Result */}
+      {calculatedYield && (
+        <View style={styles.resultContainer}>
+          <View style={styles.resultHeader}>
+            <Text style={styles.resultLabel}>{t('tools.yieldCalculator.result')}</Text>
+            <Ionicons name="leaf" size={20} color={colors.primary} />
+          </View>
+          <Text style={styles.resultValueLarge}>{calculatedYield}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderFertCalc = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>{t('tools.fertilizerCalculator.title')}</Text>
+      <Text style={styles.cardSubtitle}>{t('tools.fertilizerCalculator.subtitle')}</Text>
+
+      <Text style={styles.label}>{t('common.selectCrop')}</Text>
+      <TouchableOpacity
+        style={styles.pickerButton}
+        onPress={() => { setPickerContext('fert'); setPickerVisible(true); }}
+      >
+        <Text style={[styles.pickerText, !fertCrop && styles.placeholder]}>
+          {fertCrop || t('common.selectCrop')}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      <Text style={styles.label}>{t('tools.yieldCalculator.area')}</Text>
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.input}
+          placeholder="0"
+          keyboardType="numeric"
+          value={fertArea}
+          onChangeText={setFertArea}
+          placeholderTextColor={colors.textSecondary + '80'}
+        />
+        <View style={styles.suffixBox}>
+          <Text style={styles.suffixText}>{t('tools.areaConverter.units.ropani')}</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#D97706' }]} onPress={calculateFertilizer}>
+        <Text style={styles.primaryBtnText}>{t('tools.fertilizerCalculator.calculate')}</Text>
+      </TouchableOpacity>
+
+      {fertilizerResult && (
+        <View style={styles.fertResults}>
+          <View style={styles.fertRow}>
+            <FertCard label={t('tools.fertilizerCalculator.urea')} value={fertilizerResult.urea} unit={t('crops.fertilizer.title').includes('kg') ? 'Kg' : 'Kg'} color="#3B82F6" />
+            <FertCard label={t('tools.fertilizerCalculator.dap')} value={fertilizerResult.dap} unit="Kg" color="#F59E0B" />
+          </View>
+          <View style={styles.fertRow}>
+            <FertCard label={t('tools.fertilizerCalculator.mop')} value={fertilizerResult.mop} unit="Kg" color="#EF4444" />
+            <FertCard label={t('crops.fertilizer.compost')} value={fertilizerResult.compost} unit="Kg" color="#10B981" />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+
+  const FertCard = ({ label, value, unit, color }: any) => (
+    <View style={styles.fertCard}>
+      <View style={[styles.fertIcon, { backgroundColor: color + '20' }]}>
+        <Text style={[styles.fertSymbol, { color }]}>{label.charAt(0)}</Text>
+      </View>
+      <View>
+        <Text style={styles.fertValue}>{value} <Text style={styles.fertUnit}>{unit}</Text></Text>
+        <Text style={styles.fertLabel}>{label}</Text>
+      </View>
+    </View>
+  );
+
+  const renderConverter = (type: 'area' | 'weight') => {
+    const isArea = type === 'area';
+    const val = isArea ? areaValue : weightValue;
+    const setVal = isArea ? setAreaValue : setWeightValue;
+    const from = isArea ? areaFrom : weightFrom;
+    const to = isArea ? areaTo : weightTo;
+    const result = isArea ? getAreaResult() : getWeightResult();
+    const title = isArea ? t('tools.areaConverter.title') : t('tools.weightConverter.title');
+    const subtitle = isArea ? t('tools.areaConverter.subtitle') : t('tools.weightConverter.subtitle');
+    const units = isArea ? AREA_UNITS : WEIGHT_UNITS;
+
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardSubtitle}>{subtitle}</Text>
+
+        <View style={styles.converterGrid}>
+          {/* From Section */}
+          <View style={styles.convSection}>
+            <Text style={styles.labelSm}>{t('common.from')}</Text>
+            <TouchableOpacity
+              style={styles.unitPill}
+              onPress={() => { setPickerContext(isArea ? 'areaFrom' : 'weightFrom'); setPickerVisible(true); }}
+            >
+              <Text style={styles.unitPillText}>{(units as any)[from].name}</Text>
+              <Ionicons name="chevron-down" size={14} color={colors.text} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.convInput}
+              placeholder="1"
+              value={val}
+              onChangeText={setVal}
+              keyboardType="numeric"
+              placeholderTextColor={colors.textSecondary + '80'}
+            />
+          </View>
+
+          {/* Swap Icon */}
+          <TouchableOpacity style={styles.swapIcon} onPress={() => {
+            if (isArea) { setAreaFrom(areaTo as any); setAreaTo(areaFrom as any); }
+            else { setWeightFrom(weightTo as any); setWeightTo(weightFrom as any); }
+          }}>
+            <Ionicons name="swap-horizontal" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          {/* To Section */}
+          <View style={styles.convSection}>
+            <Text style={styles.labelSm}>{t('common.to')}</Text>
+            <TouchableOpacity
+              style={styles.unitPill}
+              onPress={() => { setPickerContext(isArea ? 'areaTo' : 'weightTo'); setPickerVisible(true); }}
+            >
+              <Text style={styles.unitPillText}>{(units as any)[to].name}</Text>
+              <Ionicons name="chevron-down" size={14} color={colors.text} />
+            </TouchableOpacity>
+            <View style={styles.convOutput}>
+              <Text style={styles.convOutputText} numberOfLines={1} adjustsFontSizeToFit>
+                {result ? result.split(' ')[0] : '-'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {result && (
+          <View style={styles.resultBanner}>
+            <Text style={styles.resultBannerText}>{result}</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('tools.title')}</Text>
-        </View>
+        {renderHeader()}
+        {renderTabs()}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={{ paddingHorizontal: spacing.l }}>
-          {TOOLS.map((tool) => (
-            <TouchableOpacity
-              key={tool.id}
-              style={[styles.tab, activeTool === tool.id && { backgroundColor: colors.primary }]}
-              onPress={() => {
-                setActiveTool(tool.id);
-                setCalculatedYield(null);
-                setAreaResult(null);
-                setWeightResult(null);
-              }}
-            >
-              <Ionicons name={tool.icon as any} size={16} color={activeTool === tool.id ? '#FFF' : colors.text} style={{ marginRight: 6 }} />
-              <Text style={[styles.tabText, activeTool === tool.id && styles.tabTextActive]}>
-                {t(`tools.toolNames.${tool.id}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {activeTool === 'yield' && renderYieldCalc()}
+          {activeTool === 'fertilizer' && renderFertCalc()}
+          {activeTool === 'area' && renderConverter('area')}
+          {activeTool === 'unit' && renderConverter('weight')}
         </ScrollView>
 
-        <ScrollView
-          style={styles.scrollArea}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderToolContent()}
-        </ScrollView>
-
-        {/* CROP SELECTION MODAL */}
-        <Modal visible={modalVisible} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('common.selectCrop')}</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
+        <Modal visible={pickerVisible} transparent animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setPickerVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalBody}>
+                <Text style={styles.modalHeader}>{t('common.select')}</Text>
+                <ScrollView style={styles.modalScroll}>
+                  {getPickerItems().map((item) => (
+                    <TouchableOpacity
+                      key={item.value}
+                      style={styles.modalItem}
+                      onPress={() => handlePickerSelect(item.value)}
+                    >
+                      <Text style={styles.modalItemText}>{item.label}</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.border} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
-              <ScrollView style={{ maxHeight: 400 }}>
-                {csvParser.getAllCrops().map((c) => (
-                  <TouchableOpacity
-                    key={c}
-                    style={styles.cropOption}
-                    onPress={() => { setSelectedCrop(c); setModalVisible(false); }}
-                  >
-                    <Text style={styles.cropOptionText}>{c}</Text>
-                    {selectedCrop === c && <Ionicons name="checkmark" size={20} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
-
-        {/* AREA FROM UNIT PICKER */}
-        <Modal visible={showAreaFromPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.from')})</Text>
-                <TouchableOpacity onPress={() => setShowAreaFromPicker(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={{ maxHeight: 300 }}>
-                {(Object.keys(AREA_UNITS) as (keyof typeof AREA_UNITS)[]).map((key) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={styles.cropOption}
-                    onPress={() => { setAreaFromUnit(key); setShowAreaFromPicker(false); }}
-                  >
-                    <Text style={styles.cropOptionText}>{t(`tools.areaConverter.units.${key}`)}</Text>
-                    {areaFromUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* AREA TO UNIT PICKER */}
-        <Modal visible={showAreaToPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.to')})</Text>
-                <TouchableOpacity onPress={() => setShowAreaToPicker(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={{ maxHeight: 300 }}>
-                {(Object.keys(AREA_UNITS) as (keyof typeof AREA_UNITS)[]).map((key) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={styles.cropOption}
-                    onPress={() => { setAreaToUnit(key); setShowAreaToPicker(false); }}
-                  >
-                    <Text style={styles.cropOptionText}>{t(`tools.areaConverter.units.${key}`)}</Text>
-                    {areaToUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* WEIGHT FROM UNIT PICKER */}
-        <Modal visible={showWeightFromPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.from')})</Text>
-                <TouchableOpacity onPress={() => setShowWeightFromPicker(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={{ maxHeight: 300 }}>
-                {(Object.keys(WEIGHT_UNITS) as (keyof typeof WEIGHT_UNITS)[]).map((key) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={styles.cropOption}
-                    onPress={() => { setWeightFromUnit(key); setShowWeightFromPicker(false); }}
-                  >
-                    <Text style={styles.cropOptionText}>{t(`tools.weightConverter.units.${key}`)}</Text>
-                    {weightFromUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* WEIGHT TO UNIT PICKER */}
-        <Modal visible={showWeightToPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('common.select')} Unit ({t('common.to')})</Text>
-                <TouchableOpacity onPress={() => setShowWeightToPicker(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={{ maxHeight: 300 }}>
-                {(Object.keys(WEIGHT_UNITS) as (keyof typeof WEIGHT_UNITS)[]).map((key) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={styles.cropOption}
-                    onPress={() => { setWeightToUnit(key); setShowWeightToPicker(false); }}
-                  >
-                    <Text style={styles.cropOptionText}>{t(`tools.weightConverter.units.${key}`)}</Text>
-                    {weightToUnit === key && <Ionicons name="checkmark" size={20} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
       </View>
     </TouchableWithoutFeedback>
   );
 }
+
+
+// --- Styles ---
 
 const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets: any) => StyleSheet.create({
   container: {
@@ -483,210 +486,340 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     fontWeight: typography.weights.bold,
     color: colors.text,
   },
-  tabScroll: {
-    maxHeight: 50,
-    marginBottom: spacing.l,
+  // Tabs
+  tabContainer: {
+    paddingHorizontal: spacing.l,
+    marginBottom: spacing.m,
+  },
+  tabContent: {
+    gap: 8,
+    paddingVertical: 4,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
-    marginRight: spacing.s,
+    marginBottom: 4
+  },
+  tabActive: {
+    backgroundColor: colors.text,
+    borderColor: colors.text,
   },
   tabText: {
+    marginLeft: 6,
+    fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
-    fontSize: 13,
+    color: colors.textSecondary,
   },
   tabTextActive: {
-    color: '#FFF',
+    color: colors.background,
   },
-  scrollArea: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: spacing.l,
-    paddingBottom: spacing.xxl,
-    flexGrow: 1,
-  },
-  toolContainer: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 24,
+  // Main Content
+  scrollContent: {
     padding: spacing.l,
-    paddingBottom: spacing.xl,
+    paddingBottom: 100,
+  },
+
+  // Cards
+  card: {
+    borderRadius: 24,
+    backgroundColor: colors.card,
+    padding: spacing.l,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: spacing.l,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  toolTitle: {
-    fontSize: typography.sizes.header,
-    fontWeight: 'bold',
+  cardTitle: {
+    fontSize: typography.sizes.large,
+    fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: 4,
   },
-  toolDesc: {
-    fontSize: typography.sizes.base,
+  cardSubtitle: {
+    fontSize: typography.sizes.mobile,
     color: colors.textSecondary,
     marginBottom: spacing.l,
   },
-  inputLabel: {
+
+  // Inputs
+  label: {
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.s,
-    marginTop: spacing.s,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  selectorBtn: {
+  pickerButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    justifyContent: 'space-between',
+    backgroundColor: colors.cardMuted || colors.background,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: spacing.m,
-    marginBottom: spacing.m,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: spacing.l,
   },
-  selectorText: {
+  pickerText: {
     fontSize: 16,
+    fontWeight: '500',
     color: colors.text,
   },
-  placeholderText: {
+  placeholder: {
     color: colors.textSecondary,
   },
-  inputWrapper: {
+  inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: spacing.m,
-    marginBottom: spacing.l,
+    marginBottom: spacing.xl,
   },
   input: {
     flex: 1,
-    paddingVertical: spacing.m,
-    fontSize: 16,
-    color: colors.text,
-  },
-  unitText: {
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginLeft: spacing.s,
-  },
-  converterRow: {
-    flexDirection: 'row',
-    gap: spacing.s,
-    marginBottom: spacing.m,
-  },
-  unitSelector: {
-    minWidth: 140,
-  },
-  unitBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.background,
+    backgroundColor: colors.cardMuted || colors.background,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: spacing.m,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 18,
+    color: colors.text,
+    fontWeight: '600',
   },
-  unitBtnText: {
-    fontSize: 14,
+  suffixBox: {
+    backgroundColor: colors.border,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  suffixText: {
     fontWeight: '600',
     color: colors.text,
-    marginRight: 4,
   },
-  swapContainer: {
-    alignItems: 'center',
-    marginVertical: spacing.s,
-  },
-  swapBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionBtn: {
+
+  // Buttons
+  primaryBtn: {
     backgroundColor: colors.primary,
-    padding: spacing.m,
+    paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
-    marginTop: spacing.m,
   },
-  actionBtnText: {
-    color: '#FFF',
+  primaryBtnText: {
+    color: colors.background,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  resultBox: {
+
+  // Results
+  resultContainer: {
     marginTop: spacing.xl,
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    padding: spacing.l,
+    backgroundColor: colors.cardMuted,
     borderRadius: 16,
+    padding: spacing.l,
     borderWidth: 1,
-    borderColor: '#10B981',
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
   resultLabel: {
-    color: '#047857',
     fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+    textTransform: 'uppercase',
+  },
+  resultValueLarge: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.text,
+  },
+
+  // Fertilizer Grid
+  fertResults: {
+    marginTop: spacing.l,
+    gap: spacing.m,
+  },
+  fertRow: {
+    flexDirection: 'row',
+    gap: spacing.m,
+  },
+  fertCard: {
+    flex: 1,
+    backgroundColor: colors.cardMuted,
+    padding: 12,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fertIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fertSymbol: {
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  fertValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  fertUnit: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  fertLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1,
   },
-  resultValue: {
-    color: '#065F46',
-    fontSize: 32,
+
+  // Converter
+  converterGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  convSection: {
+    flex: 1,
+    gap: 8,
+  },
+  convInput: {
+    backgroundColor: colors.cardMuted,
+    borderRadius: 16,
+    padding: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text
+  },
+  convOutput: {
+    backgroundColor: colors.cardMuted,
+    borderRadius: 16,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 50
+  },
+  convOutputText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  unitPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: colors.card,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  unitPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  swapIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  labelSm: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  resultBanner: {
+    marginTop: spacing.l,
+    backgroundColor: colors.text,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  resultBannerText: {
+    fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 4,
+    color: colors.background,
   },
+
   // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
-  modalContent: {
+  modalBody: {
     backgroundColor: colors.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: spacing.l,
-    paddingBottom: 40,
+    maxHeight: '60%',
   },
   modalHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: spacing.l,
+  },
+  modalScroll: {
+    maxHeight: 400,
+  },
+  modalItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.l,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  cropOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  cropOptionText: {
+  modalItemText: {
     fontSize: 16,
     color: colors.text,
-  }
+  },
 });

@@ -71,7 +71,7 @@ export default function CropsScreen() {
     if (activeTab === 'calendar') {
       setFilteredCrops(csvParser.getCropsByMonth(selectedMonth, region));
     } else {
-      setFilteredCrops(csvParser.getCropsData());
+      setFilteredCrops(csvParser.getCropsData(region));
     }
   };
 
@@ -85,7 +85,7 @@ export default function CropsScreen() {
     setSearchQuery(text);
     if (!text) {
       if (activeTab === 'calendar') setFilteredCrops(csvParser.getCropsByMonth(selectedMonth, region));
-      else setFilteredCrops(csvParser.getCropsData());
+      else setFilteredCrops(csvParser.getCropsData(region));
     } else {
       setFilteredCrops(csvParser.searchCrops(text));
     }
@@ -139,8 +139,8 @@ export default function CropsScreen() {
               {activeTab === 'calendar' && (
                 <View>
                   <View style={styles.detailGrid}>
-                    <DetailItem label={t('crops.details.maturity')} value={`${crop.maturityDays} ${t('crops.details.days')}`} />
-                    <DetailItem label={t('crops.details.yield')} value={`${crop.yield} ${t('crops.details.kgPerRopani')}`} />
+                    <DetailItem label={t('crops.details.maturity')} value={crop.maturityDays} />
+                    <DetailItem label={t('crops.details.yield')} value={crop.yield} />
                   </View>
                   <View style={styles.sowingBadgeContainer}>
                     <Text style={styles.sowingLabel}>{t('crops.sowing.label', { region: t(`regions.${region}.label`) })}</Text>
@@ -157,7 +157,11 @@ export default function CropsScreen() {
                     <NutrientRow label={t('crops.fertilizer.nitrogen')} value={crop.nitrogen} color="#EF4444" symbol="N" unit="kg" />
                     <NutrientRow label={t('crops.fertilizer.phosphorus')} value={crop.phosphorus} color="#F59E0B" symbol="P" unit="kg" />
                     <NutrientRow label={t('crops.fertilizer.potassium')} value={crop.potassium} color="#3B82F6" symbol="K" unit="kg" />
-                    <NutrientRow label={t('crops.fertilizer.compost')} value={crop.compost} color="#10B981" symbol="Org" unit="ton" />
+                    <NutrientRow label={t('crops.fertilizer.compost')} value={crop.compost} color="#10B981" symbol="Org" unit="kg" />
+                    {crop.urea !== undefined && crop.urea > 0 && <NutrientRow label={t('tools.fertilizerCalculator.urea')} value={crop.urea} color="#D1FAE5" symbol="Urea" unit="kg" />}
+                    {crop.dap !== undefined && crop.dap > 0 && <NutrientRow label={t('tools.fertilizerCalculator.dap')} value={crop.dap} color="#DBEAFE" symbol="DAP" unit="kg" />}
+                    {crop.mop !== undefined && crop.mop > 0 && <NutrientRow label={t('tools.fertilizerCalculator.mop')} value={crop.mop} color="#FEF3C7" symbol="MOP" unit="kg" />}
+
                   </View>
                   <View style={styles.remarksBox}>
                     <Text style={styles.remarksText}>{t('crops.fertilizer.note')} {crop.remarks}</Text>
@@ -170,12 +174,25 @@ export default function CropsScreen() {
                 <View>
                   <View style={styles.seedRecBox}>
                     <Ionicons name="leaf-outline" size={16} color="#166534" />
-                    <Text style={styles.seedRecText}>{t('crops.seeds.recommended')} {crop.seedRate}</Text>
+                    <Text style={styles.seedRecText}>
+                      {(!crop.seedRate || crop.seedRate === 'N/A' || crop.seedRate === 'उपलब्ध छैन')
+                        ? t('crops.seeds.referToPackage', 'Refer to seed package for details')
+                        : `${t('crops.seeds.recommended')} ${crop.seedRate}`}
+                    </Text>
                   </View>
-                  <View style={styles.detailGrid}>
-                    <DetailItem label={t('crops.details.plantSpacing')} value={`${crop.plantSpacing} ${t('crops.details.cm')}`} />
-                    <DetailItem label={t('crops.details.rowSpacing')} value={`${crop.rowSpacing} ${t('crops.details.cm')}`} />
-                  </View>
+
+                  {(crop.plantSpacing > 0 || crop.rowSpacing > 0) ? (
+                    <View style={styles.detailGrid}>
+                      <DetailItem label={t('crops.details.plantSpacing')} value={`${csvParser.localizeNumber(crop.plantSpacing)} ${t('crops.details.cm')}`} />
+                      <DetailItem label={t('crops.details.rowSpacing')} value={`${csvParser.localizeNumber(crop.rowSpacing)} ${t('crops.details.cm')}`} />
+                    </View>
+                  ) : (
+                    <View style={{ padding: 10, alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontStyle: 'italic', fontSize: 12 }}>
+                        {t('crops.details.spacingNotAvailable', 'Spacing data not available')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -183,17 +200,10 @@ export default function CropsScreen() {
               {activeTab === 'library' && (
                 <View>
                   <View style={styles.detailGrid}>
-                    <DetailItem label={t('crops.details.maturity')} value={`${crop.maturityDays} ${t('crops.details.days')}`} />
-                    <DetailItem label={t('crops.details.yield')} value={`${crop.yield} ${t('crops.details.kgPerRopani')}`} />
+                    <DetailItem label={t('crops.details.maturity')} value={crop.maturityDays} />
+                    <DetailItem label={t('crops.details.yield')} value={crop.yield} />
                     <DetailItem label={t('crops.details.seedRate')} value={crop.seedRate} />
-                    {/* pH Display */}
-                    {(() => {
-                      const phInfo = csvParser.getPHInfo(crop.crop);
-                      if (phInfo?.optimalPHRange) {
-                        return <DetailItem label={t('crops.details.soilPH')} value={phInfo.optimalPHRange} />;
-                      }
-                      return null;
-                    })()}
+                    {crop.phRange && <DetailItem label={t('crops.details.soilPH')} value={crop.phRange} />}
                   </View>
 
                   <Text style={styles.sectionTitleSmall}>{t('crops.sowing.periods')}</Text>
@@ -225,11 +235,12 @@ export default function CropsScreen() {
     <View style={styles.nutrientRow}>
       <Text style={styles.nutrientLabel}>{label} ({symbol})</Text>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-        <Text style={styles.nutrientValue}>{value}</Text>
-        <Text style={styles.nutrientUnit}>{unit}</Text>
+        <Text style={styles.nutrientValue}>{csvParser.localizeNumber(value)}</Text>
+        <Text style={styles.nutrientUnit}>{unit === 'kg' && i18n.language.startsWith('ne') ? 'केजी' : unit}</Text>
       </View>
     </View>
   );
+
 
   const SowingRow = ({ region, months }: { region: string, months: string }) => (
     <View style={styles.sowingRow}>
@@ -494,27 +505,28 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
 
   // Detail Grid Styles
   detailGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.m,
+    flexDirection: 'column',
+    gap: spacing.s,
     marginBottom: spacing.m,
   },
   detailItem: {
     backgroundColor: colors.cardMuted,
-    padding: spacing.s,
-    borderRadius: 12,
-    minWidth: '45%',
-    flex: 1,
+    padding: spacing.m,
+    borderRadius: 16,
+    width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   detailLabel: {
-    fontSize: 10,
+    fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 2,
-    textTransform: 'uppercase',
+    fontWeight: '600',
   },
   detailValue: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 'bold',
     color: colors.text,
   },

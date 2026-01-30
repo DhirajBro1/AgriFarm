@@ -324,8 +324,10 @@ export default function HomeScreen() {
                     <View style={styles.cropIcon}>
                       <Image source={getCropIcon(mainCropName)} style={styles.cropIconImage} resizeMode="contain" />
                     </View>
-                    <Text style={styles.cropName}>{mainCropName}</Text>
-                    <Text style={styles.cropReason}>{reason}</Text>
+                    <View style={styles.cropInfo}>
+                      <Text style={styles.cropName}>{mainCropName}</Text>
+                      <Text style={styles.cropReason}>{reason}</Text>
+                    </View>
                   </View>
                 );
               })}
@@ -827,45 +829,44 @@ const createStyles = (colors: ThemeColors, typography: any, spacing: any, insets
     flex: 1,
   },
   cropsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: spacing.s,
   },
   cropCard: {
-    width: '48%',
+    width: '100%',
     backgroundColor: colors.cardMuted || colors.background,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: spacing.m,
-    marginBottom: spacing.m,
+    flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
   cropIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     backgroundColor: '#DCFCE7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.s,
+    marginRight: spacing.m,
   },
   cropIconImage: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
+  },
+  cropInfo: {
+    flex: 1,
   },
   cropName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   cropReason: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   // Tips Section Styles
   tipsCard: {
